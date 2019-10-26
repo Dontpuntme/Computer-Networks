@@ -12,9 +12,11 @@
 #include <string.h>
 
 class Client {
-    public:
+protected:
     char* file;
-    Client( char* x);
+
+public:
+    Client(char* x);
     int runClient();
     virtual ~Client();
 };
