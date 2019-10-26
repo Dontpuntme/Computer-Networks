@@ -6,11 +6,16 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
+#include <iostream>
+#include <string.h>
 
 class Client {
-    Client(int port, char* file);
+    public:
+    char* file;
+    Client( char* x);
+    int runClient();
     virtual ~Client();
 };
 
