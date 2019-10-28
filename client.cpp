@@ -1,12 +1,12 @@
 #include "client.h"
-#define PORT 2050
 
-Client::Client(char* x) { 
+Client::Client(char* x, int portNo) { 
     file = x;
+    port = portNo;
 }
 
 int Client::runClient() {
-    int sock, valread;
+    int valread;
     struct sockaddr_in serv_addr;
     char buffer[1024] = {0};
 
@@ -16,7 +16,7 @@ int Client::runClient() {
     }
 
     serv_addr.sin_family = AF_INET; 
-    serv_addr.sin_port = htons(PORT); 
+    serv_addr.sin_port = htons(port); 
     
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) 
     { 
@@ -29,11 +29,16 @@ int Client::runClient() {
         return -1; 
     } 
 
-    send(sock, buffer, sizeof(file), 0); 
+    write(sock, file, sizeof(file)); /* not sure if this should be write or send */
     printf("Hello message sent\n"); 
-    valread = read( sock , buffer, 1024); 
+    valread = read(sock , buffer, 1024); 
     printf("%s\n",buffer); 
 
     return 0;
+}
 
+
+Client::~Client() {
+    /* free stuff */
+    close(sock);
 }

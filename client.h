@@ -14,11 +14,13 @@
 class Client {
 protected:
     char* file;
+    int port;
+    int sock;
 
 public:
-    Client(char* x);
+    Client(char* x, int portNo);
     int runClient();
-    virtual ~Client();
+    ~Client();
 };
 
 #endif

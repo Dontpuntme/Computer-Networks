@@ -11,6 +11,7 @@
 
 int main(int argc, char** argv) {
     int port, rateRequests, rateSeconds, maxUsers, timeOut;
+    char testMessage[] = "Hello\n";
     
     // TODO refactor input parsing
     if (argc < 6) {
@@ -43,6 +44,10 @@ int main(int argc, char** argv) {
     else {
         port = atoi(argv[1]);
     }
+
+    Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
+    Client client = Client(testMessage, port);
+    client.runClient();
 
     printf("Parsed arguments %d %d %d %d %d\n", port, rateRequests, rateSeconds, maxUsers, timeOut);
     return 1;

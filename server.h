@@ -30,7 +30,7 @@ public:
     Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut);
     void Recieve();
     void Return();
-    virtual ~Server(); 
+    ~Server(); 
 };
 
 #endif
