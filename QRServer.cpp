@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
     Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
     Client client = Client(testMessage, port);
     client.runClient();
+    server.Recieve();
 
     printf("Parsed arguments %d %d %d %d %d\n", port, rateRequests, rateSeconds, maxUsers, timeOut);
     return 1;
