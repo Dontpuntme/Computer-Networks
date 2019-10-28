@@ -16,7 +16,7 @@ protected:
     char* file;
     int port;
     int sock;
-
+    struct sockaddr_in serv_addr;
 public:
     Client(char* x, int portNo);
     int runClient();

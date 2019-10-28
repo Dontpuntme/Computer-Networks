@@ -1,4 +1,6 @@
 #include "QRServer.h"
+#include "getopt.h"
+#include <iostream>
 
 #define DEFAULT_PORT 2012
 #define DEFAULT_RATE_REQUESTS 3
@@ -125,37 +127,56 @@ int main(int argc, char** argv) {
     char testMessage[] = "Hello\n";
     char testMessage2[] = "Hello2\n";
     char testMessage3[] = "Hello3\n";
-    
-    // TODO refactor input parsing to use getopt() instead of ordered like this
-    if (argc < 6) {
-        timeOut = DEFAULT_TIMEOUT;
-    }
-    else {
-        timeOut = atoi(argv[5]);
-    }
-    if (argc < 5) {
-        maxUsers = DEFAULT_MAX_USERS;
-    }
-    else {
-        maxUsers = atoi(argv[4]);
-    }
-    if (argc < 4) {
-        rateSeconds = DEFAULT_RATE_SECONDS;
-    }
-    else {
-        rateSeconds = atoi(argv[3]);
-    }
-    if (argc < 3) {
-        rateRequests = DEFAULT_RATE_REQUESTS;
-    }
-    else {
-        rateRequests = atoi(argv[2]);
-    }
-    if (argc < 2) {
-        port = DEFAULT_PORT;
-    }
-    else {
-        port = atoi(argv[1]);
+    timeOut = DEFAULT_TIMEOUT;
+    maxUsers = DEFAULT_MAX_USERS;
+    rateSeconds = DEFAULT_RATE_SECONDS;
+    rateRequests = DEFAULT_RATE_REQUESTS;
+    port = DEFAULT_PORT;
+    const char* const short_opts = "p:r:u:t:";
+    const option long_opts[] = {
+        {"PORT", required_argument, nullptr, 'p'},
+        {"RATE_MSGS", required_argument, nullptr, 'm'},
+        {"RATE_TIME", required_argument, nullptr, 'r'},
+        {"MAX_USERS", required_argument, nullptr, 'u'},
+        {"TIME_OUT", required_argument, nullptr, 't'},
+
+    };
+
+    while(true)
+    {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        if(-1 == opt)
+        break;
+         switch (opt)
+        {
+        case 'p':
+            port = std::stoi(optarg);
+            std::cout << "Port set to: " << port << std::endl;
+            break;
+
+        case 'm':
+            rateRequests = std::stoi(optarg);
+            std::cout << "rateRequests set to: " << rateRequests << std::endl;
+            break;
+
+        case 'r':
+            rateSeconds = std::stoi(optarg);
+            std::cout << "rateSeconds set to: " << rateSeconds << std::endl;
+            break;
+
+        case 'u':
+            maxUsers = std::stoi(optarg);
+            std::cout << "MaxUsers set to: " << maxUsers << std::endl;
+            break;
+
+        case 't':
+            timeOut = std::stoi(optarg);
+            std::cout << "Port set to: " << timeOut << std::endl;
+            break;
+        case '?': // Unrecognized option
+        default:
+            break;
+        }
     }
     
     Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);

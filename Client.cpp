@@ -1,4 +1,6 @@
 #include "Client.h"
+#include "getopt.h"
+#include <iostream>
 
 #define DEFAULT_PORT 2012
 #define DEFAULT_ADDRESS "127.0.0.1"
@@ -10,7 +12,7 @@ Client::Client(char* x, int portNo) {
 
 int Client::runClient() {
     int valread;
-    struct sockaddr_in serv_addr;
+    
     char buffer[1024] = {0};
 
     if ((sock = socket(AF_INET, SOCK_STREAM,0))<0) {
@@ -49,5 +51,49 @@ Client::~Client() {
 
 int main(int argc, char** argv) {
     /* should take image file, port, and server ip (later two have defaults as seen at top) */
+    int port = DEFAULT_PORT;
+    std::string servAddress = DEFAULT_ADDRESS;
+    std::string file;
+    bool fileFlag = false;
+    const char* const short_opts = "f:p:a:";
+    const option long_opts[] = {
+        {"FILE", required_argument, nullptr, 'f'},
+        {"PORT", required_argument, nullptr, 'p'},
+        {"ADDRESS", required_argument, nullptr, 'a'},
+    };
+
+    while(true)
+    {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        if(-1 == opt)
+        break;
+         switch (opt)
+        {
+        case 'p':
+            port = std::stoi(optarg);
+            std::cout << "Port set to: " << port << std::endl;
+            break;
+
+        case 'f':
+            file = std::string(optarg);
+            std::cout << "File set to: " << file << std::endl;
+            fileFlag = true;
+            break;
+
+        case 'a':
+            servAddress = std::string(optarg);
+            std::cout << "Address set to: " << servAddress << std::endl;
+            break;
+        case '?': // Unrecognized option
+        default:
+            break;
+        }
+        
+    }
+    if(!fileFlag)
+        {
+            printf("Error no file given\n");
+            return -1;
+        }
     return 0;
 }
