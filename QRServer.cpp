@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
     int port, rateRequests, rateSeconds, maxUsers, timeOut;
     int pid;
     char testMessage[] = "Hello\n";
+    char testMessage2[] = "Hello2\n";
     
     // TODO refactor input parsing
     if (argc < 6) {
@@ -50,14 +51,22 @@ int main(int argc, char** argv) {
         perror("Fork Error");
         exit(1);
     }
-    else if (pid == 0) { /* child process, for client */
+    else if (pid == 0) { /* child process, for managing clients */
         sleep(1);
         Client client = Client(testMessage, port);
+        Client client2 = Client(testMessage2, port);
         client.runClient();
+        client2.runClient();
         client.~Client();
+        client2.~Client();
     }
-    else { /* parent process */ 
+    else { /* parent process, for managing server */ 
         Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
+        /* just a simple demonstration with multi-clients */
+        server.Accept();
+        server.Recieve();
+        server.Return();
+        server.Accept();
         server.Recieve();
         server.Return();
         server.~Server();

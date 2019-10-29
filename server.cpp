@@ -33,6 +33,16 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
 
     clilen = sizeof(cli_addr);
 
+    // newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+    // if (newsockfd < 0) {
+    //     perror("Error accepting socket");
+    //     exit(1);
+    // }
+    // printf("Server socket accept success\n");
+}
+
+
+void Server::Accept() {
     newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
     if (newsockfd < 0) {
         perror("Error accepting socket");

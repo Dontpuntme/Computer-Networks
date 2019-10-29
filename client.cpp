@@ -29,8 +29,8 @@ int Client::runClient() {
         exit(1); 
     } 
 
-    write(sock, file, sizeof(file)); /* not sure if this should be write or send */
-    printf("Hello message sent\n"); 
+    write(sock, file, strlen(file)); /* not sure if this should be write or send */
+    printf("Sent message to server: %s\n", file); 
     valread = read(sock , buffer, 1024); 
     printf("Recieved response from server: %s\n",buffer); 
 

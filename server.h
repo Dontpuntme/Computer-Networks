@@ -28,6 +28,7 @@ protected:
 
 public:
     Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut);
+    void Accept();
     void Recieve();
     void Return();
     ~Server(); 
