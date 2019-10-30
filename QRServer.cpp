@@ -54,21 +54,15 @@ int main(int argc, char** argv) {
     else if (pid == 0) { /* child process, for managing clients */
         sleep(1);
         Client client = Client(testMessage, port);
-        Client client2 = Client(testMessage2, port);
         client.runClient();
-        client2.runClient();
         client.~Client();
-        client2.~Client();
+        exit(0);
     }
     else { /* parent process, for managing server */ 
         Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
-        /* just a simple demonstration with multi-clients */
-        server.Accept();
-        server.Recieve();
-        server.Return();
-        server.Accept();
-        server.Recieve();
-        server.Return();
+        /* TODO rewrite with threads */
+        server.Handle_Client(1);
+
         server.~Server();
     }
     

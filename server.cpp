@@ -14,6 +14,8 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
     rr = rateRequests;
     rs = rateSeconds;
 
+    clients = (struct clientInfo *)malloc(sizeof(struct clientInfo) * maxUsers);
+
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_family = AF_INET;
@@ -32,17 +34,22 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
     printf("Server socket listen success\n");
 
     clilen = sizeof(cli_addr);
-
-    // newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-    // if (newsockfd < 0) {
-    //     perror("Error accepting socket");
-    //     exit(1);
-    // }
-    // printf("Server socket accept success\n");
 }
 
-
+/* Accept incoming connections */
 void Server::Accept() {
+    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+    if (newsockfd < 0) {
+        perror("Error accepting socket");
+        exit(1);
+    }
+    printf("Server socket accept success\n");
+}
+
+/* Accept incoming connections for specific client index*/
+void Server::Accept(int idx) {
+    cli_addr = clients[idx].cli_addr;
+    clilen = sizeof(cli_addr);
     newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
     if (newsockfd < 0) {
         perror("Error accepting socket");
@@ -59,6 +66,14 @@ void Server::Recieve() {
     }
 }
 
+/* Read information from connected socket into buffer for specific client index*/
+void Server::Recieve(int idx) {
+    bzero(clients[idx].buffer, sizeof(clients[idx].buffer));
+    if (read(newsockfd, clients[idx].buffer, sizeof(clients[idx].buffer)-1) < 0) {
+        perror("Error reading from socket");
+    }
+}
+
 /* Write information into connected socket */
 void Server::Return() {
     if (write(newsockfd, buffer, sizeof(buffer)-1) < 0) {
@@ -66,9 +81,30 @@ void Server::Return() {
     }
 }
 
+/* Write information into connected socket for specific client index*/
+void Server::Return(int idx) {
+    if (write(newsockfd, clients[idx].buffer, sizeof(clients[idx].buffer)-1) < 0) {
+        perror("Error writing to socket");
+    }
+}
+
+/* Helper which handles client interaction from accept to return */
+void Server::Handle_Client() {
+    Server::Accept();
+    Server::Recieve();
+    Server::Return();
+}
+
+/* Helper which handles client interaction from accept to return */
+void Server::Handle_Client(int idx) {
+    Server::Accept(idx);
+    Server::Recieve(idx);
+    Server::Return(idx);
+}
 
 Server::~Server() {
     /* free stuff */
+    //free(clients);
     close(newsockfd);
     close(sockfd);
 }
