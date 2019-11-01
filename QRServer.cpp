@@ -120,5 +120,45 @@ Server::~Server() {
 
 int main(int argc, char** argv) {
     /* TODO parse arguments in form ./QRServer --PORT=2050 ... with getopt() */
+    int port, rateRequests, rateSeconds, maxUsers, timeOut;
+    int curr_users;
+    char testMessage[] = "Hello\n";
+    char testMessage2[] = "Hello2\n";
+    char testMessage3[] = "Hello3\n";
+    
+    // TODO refactor input parsing to use getopt() instead of ordered like this
+    if (argc < 6) {
+        timeOut = DEFAULT_TIMEOUT;
+    }
+    else {
+        timeOut = atoi(argv[5]);
+    }
+    if (argc < 5) {
+        maxUsers = DEFAULT_MAX_USERS;
+    }
+    else {
+        maxUsers = atoi(argv[4]);
+    }
+    if (argc < 4) {
+        rateSeconds = DEFAULT_RATE_SECONDS;
+    }
+    else {
+        rateSeconds = atoi(argv[3]);
+    }
+    if (argc < 3) {
+        rateRequests = DEFAULT_RATE_REQUESTS;
+    }
+    else {
+        rateRequests = atoi(argv[2]);
+    }
+    if (argc < 2) {
+        port = DEFAULT_PORT;
+    }
+    else {
+        port = atoi(argv[1]);
+    }
+    
+    Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
+ 
     return 0;
 }

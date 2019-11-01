@@ -1,7 +1,7 @@
 SOURCES := Testing.cpp QRServer.cpp Client.cpp
 HEADERS := QRServer.h Client.h
-LINK := -lpthreads
-OUTPUT := Testing
+LINK := -pthread
+OUTPUT := Testing QRServer Client
 
 
 SERVER_SOURCES := QRServer.cpp
@@ -15,7 +15,7 @@ CLIENT_OUT := Client
 all: $(OUTPUT)
 
 $(OUTPUT): $(SOURCES) $(HEADERS)
-	$(CXX) -o $(SERVER_OUT) $(SERVER_SOURCES)
+	$(CXX) -o $(SERVER_OUT) $(SERVER_SOURCES) $(LINK)
 	$(CXX) -o $(CLIENT_OUT) $(CLIENT_SOURCES)
 
 clean:
