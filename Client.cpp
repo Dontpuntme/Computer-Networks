@@ -1,4 +1,4 @@
-#include "client.h"
+#include "Client.h"
 
 Client::Client(char* x, int portNo) { 
     file = x;
@@ -41,4 +41,9 @@ int Client::runClient() {
 Client::~Client() {
     /* free stuff */
     close(sock);
+}
+
+
+int main(int argc, char** argv) {
+    return 0;
 }
