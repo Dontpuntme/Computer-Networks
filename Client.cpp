@@ -1,5 +1,8 @@
 #include "Client.h"
 
+#define DEFAULT_PORT 2012
+#define DEFAULT_ADDRESS "127.0.0.1"
+
 Client::Client(char* x, int portNo) { 
     file = x;
     port = portNo;
@@ -45,5 +48,6 @@ Client::~Client() {
 
 
 int main(int argc, char** argv) {
+    /* should take image file, port, and server ip (later two have defaults as seen at top) */
     return 0;
 }
