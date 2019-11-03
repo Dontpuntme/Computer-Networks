@@ -46,6 +46,12 @@ protected:
     socklen_t clilen;
 
 public:
+    /* leaving these thread-fields public for now, will revisit later */
+    int thread_idx;
+    int oldest_thread;
+    pthread_t** threads;
+
+    /* methods */
     Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut);
     void Accept();
     void Accept(int idx);
@@ -55,8 +61,7 @@ public:
     void Return(int idx);
     void Handle_Client();
     void Handle_Client(int idx);
-    void ProcessQRCode(int idx);
-
+    void ProcessQRCode(char* filename, int idx);
     ~Server(); 
 };
 

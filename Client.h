@@ -15,10 +15,11 @@ class Client {
 protected:
     char* file;
     int port;
+    char* address;
     int sock;
     struct sockaddr_in serv_addr;
 public:
-    Client(char* x, int portNo);
+    Client(char* f, int portNo, char* addr);
     int runClient();
     ~Client();
 };

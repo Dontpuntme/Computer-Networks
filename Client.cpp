@@ -5,16 +5,17 @@
 #define DEFAULT_PORT 2012
 #define DEFAULT_ADDRESS "127.0.0.1"
 
-Client::Client(char* x, int portNo) { 
-    file = x;
+Client::Client(char* f, int portNo, char* addr) { 
+    file = f;
     port = portNo;
+    address = addr;
 }
 
 int Client::runClient() {
     int valread;
     
     char buffer[1024] = {0};
-    char bufferTwo[1024] ={0};
+    char bufferTwo[1024] ={0}; /* TODO make sure the first 32 bits are reserved for file size */
 
     if ((sock = socket(AF_INET, SOCK_STREAM,0))<0) {
         perror("Socket Creation error");
@@ -36,7 +37,7 @@ int Client::runClient() {
     } 
     FILE * fp;
     fp = fopen(file,"r+");
-    fscanf(fp,bufferTwo,'c');
+    fscanf(fp,bufferTwo,'c'); 
     fclose (fp);
     int x = strlen(bufferTwo);
     write(sock, strncat((char*)x,bufferTwo,sizeof(x)+sizeof(bufferTwo)), strlen(file)); /* not sure if this should be write or send */
@@ -100,5 +101,9 @@ int main(int argc, char** argv) {
             printf("Error no file given\n");
             return -1;
         }
+
+    Client client = Client((char*)file.c_str(), port, (char*)servAddress.c_str()); /* should probably rewrite using only char*, unless we really want std::string */
+    client.runClient();
+    client.~Client;
     return 0;
 }

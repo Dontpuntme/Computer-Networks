@@ -15,12 +15,17 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
         perror("Error creating socket");
         exit(1);
     }
+
+    thread_idx = 0; /* public field to keep track of what tread to put next client on */
+    oldest_thread = 0;
     
     port = portNo;
     users = maxUsers;
     time = timeOut;
     rr = rateRequests;
     rs = rateSeconds;
+
+    threads = (pthread_t **)malloc(sizeof(pthread_t *)*users); /* allocate array of pthread pointers, will allocate actual threads as needed */
 
     clients = (struct clientInfo *)malloc(sizeof(struct clientInfo) * maxUsers);
 
@@ -107,28 +112,33 @@ void Server::Handle_Client() {
 
 /* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
-    
+    char idxchar = (char) (idx + 48);
+    char* filename;
+    asprintf(&filename, "QR%c.jpeg", idxchar);
     Server::Accept(idx);
     Server::Recieve(idx);
+    Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
     Server::Return(idx);
 }
-void Server::ProcessQRCode( int idx)
-{
-    
+
+void Server::ProcessQRCode(char* filename, int idx) {
+    //filename qrcode.jpeg
     char inBuffer[1000];
     FILE * fp;
-    fp = fopen("qrcode.jpeg", "w+");
+    fp = fopen(filename, "w+");
     fprintf(fp,clients[idx].buffer); // not sure
     fclose (fp);
     FILE* progOutput; // a file pointer representing the popen output
     
     // launch the "md5sum" program to compute the MD5 hash of
     // the file "/bin/ls" and save it into the file pointer
-    progOutput = popen("java -cp javase.jar:core.jar com.google.zxing.client.j2se.CommandLineRunner qrcode.jpeg", "r");
+    char* cmd; /* string of java command */
+    char* base = (char *)"java -cp javase.jar:core.jar com.google.zxing.client.j2se.CommandLineRunner";
+    asprintf(&cmd, "%s %s", base, filename);
+    progOutput = popen(cmd, "r");
  
     // make sure that popen succeeded
-    if(!progOutput)
-    {
+    if(!progOutput) {
         perror("npopen failedn");
         exit(1);
     }
@@ -137,40 +147,35 @@ void Server::ProcessQRCode( int idx)
     memset(inBuffer, (char)NULL, sizeof(inBuffer));
  
     // read the popen output into the char array buffer
-    if(fread(inBuffer, sizeof(char), sizeof(char) * sizeof(inBuffer), progOutput) < 0)
-    {
+    if(fread(inBuffer, sizeof(char), sizeof(char) * sizeof(inBuffer), progOutput) < 0) {
         perror("fread failed");
         exit(1);
     }
+
     // close the file pointer representing the popen output
-    if(pclose(progOutput) < 0)
-    {
+    if(pclose(progOutput) < 0) {
         perror("pclose failed");
         exit(1);
     }
+
     int lineCounter = 0;
     int z = 0;
     memset(clients[idx].URLInfo, (char)NULL, sizeof(clients[idx].URLInfo));
-    for(int n = 0; n < 1000; n++)
-    {
-        if(inBuffer[n]=='\n')
-        {
+
+    for(int n = 0; n < 1000; n++) {
+        if(inBuffer[n]=='\n') {
         lineCounter ++;
         }
-        else if(lineCounter == 4)
-        {
+        else if(lineCounter == 4) {
             clients[idx].URLInfo[z]= inBuffer[n];
             z++;
         }
-        
-        if(lineCounter == 5)
-        {
+        if(lineCounter == 5) {
             break;
         }
-        
-
     }
 }
+
 Server::~Server() {
     /* free stuff */
     //free(clients);
@@ -237,8 +242,27 @@ int main(int argc, char** argv) {
             break;
         }
     }
-    
- 
+
+    Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut); 
+
+    /* keep accepting clients/managing which thread they go on */
+    while(true) {
+        if (server.thread_idx < maxUsers) { /* <max threads in use, dispatch new one */
+            server.threads[server.thread_idx] = (pthread_t *)malloc(sizeof(pthread_t));
+            pthread_create(server.threads[server.thread_idx], NULL, ..., ...); /* note that this fn should inc. thread idx w/mutex */
+        }
+        else { /* join on oldest client idx, use that for new thread */ 
+            pthread_join(*(server.threads[server.oldest_thread]), NULL);
+            pthread_create(server.threads[server.oldest_thread], NULL, ..., ...); // TODO write thread method/args
+            if (server.oldest_thread == maxUsers - 1) { /* loop back around */
+                server.oldest_thread = 0;
+            }
+            else { /* just increment */
+                server.oldest_thread++;
+            }
+        }
+        // TODO update/create log file
+    }
     
     return 0;
 }
