@@ -14,6 +14,7 @@ int Client::runClient() {
     int valread;
     
     char buffer[1024] = {0};
+    char bufferTwo[1024] ={0};
 
     if ((sock = socket(AF_INET, SOCK_STREAM,0))<0) {
         perror("Socket Creation error");
@@ -33,8 +34,12 @@ int Client::runClient() {
         perror("Connection Failed"); 
         exit(1); 
     } 
-
-    write(sock, file, strlen(file)); /* not sure if this should be write or send */
+    FILE * fp;
+    fp = fopen(file,"r+");
+    fscanf(fp,bufferTwo,'c');
+    fclose (fp);
+    int x = strlen(bufferTwo);
+    write(sock, strncat((char*)x,bufferTwo,sizeof(x)+sizeof(bufferTwo)), strlen(file)); /* not sure if this should be write or send */
     printf("Sent message to server: %s\n", file); 
     valread = read(sock , buffer, 1024); 
     printf("Recieved response from server: %s\n",buffer); 
