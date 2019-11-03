@@ -176,6 +176,14 @@ void Server::ProcessQRCode(char* filename, int idx) {
     }
 }
 
+/* thread method to call handle_client */
+static void *Client_Thread(void *context) {
+    struct threadArgs* args = (struct threadArgs *)context;
+    Server serv = *(args->s);
+    int index = args->idx;
+    serv.Handle_Client(index);
+}
+
 Server::~Server() {
     /* free stuff */
     //free(clients);
@@ -247,13 +255,17 @@ int main(int argc, char** argv) {
 
     /* keep accepting clients/managing which thread they go on */
     while(true) {
+        struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
+        arguments->s = &server;
         if (server.thread_idx < maxUsers) { /* <max threads in use, dispatch new one */
+            arguments->idx = server.thread_idx;
             server.threads[server.thread_idx] = (pthread_t *)malloc(sizeof(pthread_t));
-            pthread_create(server.threads[server.thread_idx], NULL, ..., ...); /* note that this fn should inc. thread idx w/mutex */
+            pthread_create(server.threads[server.thread_idx], NULL, &Client_Thread, (void *)arguments); /* note that this fn should inc. thread idx w/mutex */
         }
         else { /* join on oldest client idx, use that for new thread */ 
+            arguments->idx = server.oldest_thread;
             pthread_join(*(server.threads[server.oldest_thread]), NULL);
-            pthread_create(server.threads[server.oldest_thread], NULL, ..., ...); // TODO write thread method/args
+            pthread_create(server.threads[server.oldest_thread], NULL, &Client_Thread, (void *)arguments);
             if (server.oldest_thread == maxUsers - 1) { /* loop back around */
                 server.oldest_thread = 0;
             }

@@ -22,9 +22,7 @@ struct clientInfo {
     // ^ this information may be obtained by checking what we have written in the log files
 };
 
-
 class Server {
-
 protected:
     /* input arg attributes */
     int rr;
@@ -62,7 +60,14 @@ public:
     void Handle_Client();
     void Handle_Client(int idx);
     void ProcessQRCode(char* filename, int idx);
+    static void *Client_Thread(void *context);
     ~Server(); 
+};
+
+/* struct for passing to threads created for processing clients */
+struct threadArgs {
+    Server* s;
+    int idx;
 };
 
 #endif

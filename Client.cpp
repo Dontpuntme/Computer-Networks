@@ -104,6 +104,6 @@ int main(int argc, char** argv) {
 
     Client client = Client((char*)file.c_str(), port, (char*)servAddress.c_str()); /* should probably rewrite using only char*, unless we really want std::string */
     client.runClient();
-    client.~Client;
+    //client.~Client;
     return 0;
 }
