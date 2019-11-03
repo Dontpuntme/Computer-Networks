@@ -1,7 +1,7 @@
 #include "QRServer.h"
 #include "getopt.h"
 #include <iostream>
-
+#include "string.h"
 #define DEFAULT_PORT 2012
 #define DEFAULT_RATE_REQUESTS 3
 #define DEFAULT_RATE_SECONDS 60
@@ -112,13 +112,72 @@ void Server::Handle_Client(int idx) {
     Server::Recieve(idx);
     Server::Return(idx);
 }
+void Server::ProcessQRCode( int idx)
+{
+    
+    char inBuffer[1000];
+    FILE * fp;
+    fp = fopen("qrcode.jpeg", "w+");
+    fprintf(fp,clients[idx].buffer); // not sure
+    fclose (fp);
+    FILE* progOutput; // a file pointer representing the popen output
+    
+    // launch the "md5sum" program to compute the MD5 hash of
+    // the file "/bin/ls" and save it into the file pointer
+    progOutput = popen("java -cp javase.jar:core.jar com.google.zxing.client.j2se.CommandLineRunner qrcode.jpeg", "r");
+ 
+    // make sure that popen succeeded
+    if(!progOutput)
+    {
+        perror("npopen failedn");
+        exit(1);
+    }
+ 
+    // reset buffer to all NULLS 
+    memset(inBuffer, (char)NULL, sizeof(inBuffer));
+ 
+    // read the popen output into the char array buffer
+    if(fread(inBuffer, sizeof(char), sizeof(char) * sizeof(inBuffer), progOutput) < 0)
+    {
+        perror("fread failed");
+        exit(1);
+    }
+    // close the file pointer representing the popen output
+    if(pclose(progOutput) < 0)
+    {
+        perror("pclose failed");
+        exit(1);
+    }
+    int lineCounter = 0;
+    int z = 0;
+    memset(clients[idx].URLInfo, (char)NULL, sizeof(clients[idx].URLInfo));
+    for(int n = 0; n < 1000; n++)
+    {
+        if(inBuffer[n]=='\n')
+        {
+        lineCounter ++;
+        }
+        else if(lineCounter == 4)
+        {
+            clients[idx].URLInfo[z]= inBuffer[n];
+            z++;
+        }
+        
+        if(lineCounter == 5)
+        {
+            break;
+        }
+        
 
+    }
+}
 Server::~Server() {
     /* free stuff */
     //free(clients);
     close(newsockfd);
     close(sockfd);
 }
+
 
 int main(int argc, char** argv) {
     /* TODO parse arguments in form ./QRServer --PORT=2050 ... with getopt() */
@@ -179,7 +238,7 @@ int main(int argc, char** argv) {
         }
     }
     
-    Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut);
  
+    
     return 0;
 }
