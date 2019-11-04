@@ -1,6 +1,7 @@
 #include "Client.h"
 #include "getopt.h"
 #include <iostream>
+#include <fstream>
 
 #define DEFAULT_PORT 2012
 #define DEFAULT_ADDRESS "127.0.0.1"
@@ -41,20 +42,10 @@ int Client::runClient() {
 
     uint32_t filesize; /* 32 bit filesize (4 bytes) */
     FILE* fp;
-    int symbol;
-    if ((fp = fopen(file,"r")) != NULL) {
+    if ((fp = fopen(file,"rb")) != NULL) {
         if (fseek(fp, 0L, SEEK_END) == 0) {
             filesize = ftell(fp); /* get buffer size */
-            fileData = (char *)malloc(sizeof(char) * filesize + 1);
-            if (fileData < 0) { /* file too big */
-                perror("Invalid filesize");
-                exit(1);
-            }
-            if (fseek(fp, 0L, SEEK_SET) != 0) { /* go back to start to read into buf */
-                fread(fileData, sizeof(char), filesize, fp);
-                if (ferror(fp) != 0) { perror("Error reading file");}
-                else {fileData[filesize + 1] = '\0';} 
-            }
+            fileData = (char *)malloc(sizeof(char) * filesize);
         }
         fclose(fp);
     }
@@ -62,28 +53,38 @@ int Client::runClient() {
         perror("File read error");
     }
 
+    std::ifstream input(file, std::ios::binary);
+    input.read(fileData, filesize);
+
+    std::ofstream output("test.png", std::ios::binary);
+    output.write(fileData, filesize);
+    output.close();
+
     printf("Filesize: %d bytes\n", filesize);
 
     /* creating buffer to send */
-    sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4 + 1));
-    bzero(sendBuffer, sizeof(sendBuffer));
-    char c1 = (filesize >> (0)) & 0xff;
-    char c2 = (filesize >> (8)) & 0xff;
-    char c3 = (filesize >> (16)) & 0xff;
-    char c4 = (filesize >> (24)) & 0xff;
-    strncpy(sendBuffer, &c1, 1);
-    strncat(sendBuffer, &c2, 1);
-    strncat(sendBuffer, &c3, 1);
-    strncat(sendBuffer, &c4, 1);
-    strncat(sendBuffer, fileData, filesize + 1);
-
-    printf("test: %d\n", strlen(fileData)); /* why is this happening */
+    // sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4));
+    // bzero(sendBuffer, sizeof(sendBuffer));
+    // char c1 = (filesize >> (0)) & 0xff;
+    // char c2 = (filesize >> (8)) & 0xff;
+    // char c3 = (filesize >> (16)) & 0xff;
+    // char c4 = (filesize >> (24)) & 0xff;
+    // strncpy(sendBuffer, &c1, 1);
+    // strncat(sendBuffer, &c2, 1);
+    // strncat(sendBuffer, &c3, 1);
+    // strncat(sendBuffer, &c4, 1);
+    // strncat(sendBuffer, fileData, filesize);
 
     /* send message and recieve response */
-    write(sock, sendBuffer, filesize + 4 + 1);
+    // write(sock, sendBuffer, filesize + 4);
+    // printf("Sent file to server: %s\n", file); 
+    // valread = read(sock , readBuffer, 1024); 
+    // printf("Recieved response from server: %s\n",readBuffer); 
+
+    write(sock, &filesize, 4);
+    write(sock, fileData, filesize);
     printf("Sent file to server: %s\n", file); 
     valread = read(sock , readBuffer, 1024); 
-    printf("Recieved response from server: %s\n",readBuffer); 
 
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "QRServer.h"
 #include "getopt.h"
 #include <iostream>
+#include <fstream>
 #include "string.h"
 #define DEFAULT_PORT 2012
 #define DEFAULT_RATE_REQUESTS 3
@@ -66,12 +67,13 @@ void Server::Accept(int idx) {
 
 /* Read information from connected socket into buffer for specific client index*/
 void Server::Recieve(int idx) {
-    uint32_t filesize;
+    uint32_t filesize = 0;
     if (read(clients[idx].cli_sockfd, &filesize, 4) < 0) { perror("error finding filesize");}
     printf("File size found to be: %d\n", filesize);
-    clients[idx].clientData = (char* )malloc(sizeof(char) * filesize + 1);
-    bzero(clients[idx].clientData, sizeof(clients[idx].clientData));
-    if (read(clients[idx].cli_sockfd, clients[idx].clientData, filesize + 1) < 0) {
+    clients[idx].filesize = filesize;
+    clients[idx].clientData = (char* )malloc(sizeof(char) * filesize); /* note that we may need to add 4 to account for filesize */
+    bzero(clients[idx].clientData, filesize);
+    if (read(clients[idx].cli_sockfd, clients[idx].clientData, filesize) < 0) {
         perror("Error reading from socket");
     }
 }
@@ -93,26 +95,32 @@ void Server::Handle_Client(int idx) {
     Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
     Server::Return(idx);
     free(filename);
+    close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
 }
 
 void Server::ProcessQRCode(char* filename, int idx) {
     //filename qrcode.jpeg
     printf("Processing QR code, filename: %s\n", filename);
-    printf("Client file buffer size: %d\n", strlen(clients[idx].clientData));
-    clients[idx].clientData = clients[idx].clientData + 4; /* ignore first 4 bytes (filesize) */
+    printf("Client image file size: %d\n", clients[idx].filesize);
+    clients[idx].clientData = clients[idx].clientData; /* add 4 to ignore first 4 bytes (filesize) */
     char inBuffer[1000];
+
+    /* write image file locally for use in jar file QR interpreter */
     FILE * fp;
-    fp = fopen(filename, "w+");
-    fprintf(fp,clients[idx].clientData); // not sure
-    fclose (fp);
+    fp = fopen(filename, "wb+");
+    std::ofstream output(filename, std::ios::binary);
+    output.write(clients[idx].clientData, clients[idx].filesize);
+    output.close();
+    //fwrite(clients[idx].clientData, clients[idx].filesize, 1, fp);
+    //fclose (fp);
+
+    /* run java program for QR code */
     FILE* progOutput; // a file pointer representing the popen output
-    
-    // launch the "md5sum" program to compute the MD5 hash of
-    // the file "/bin/ls" and save it into the file pointer
     char* cmd; /* string of java command */
     char* base = (char *)"java -cp javase.jar:core.jar com.google.zxing.client.j2se.CommandLineRunner";
     asprintf(&cmd, "%s %s", base, filename);
+    printf("Running command: %s\n", cmd);
     progOutput = popen(cmd, "r");
  
     // make sure that popen succeeded

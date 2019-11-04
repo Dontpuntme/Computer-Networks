@@ -15,6 +15,7 @@
 /* struct for storing info for server clients */
 struct clientInfo {
     int cli_sockfd;
+    uint32_t filesize;
     struct sockaddr_in cli_addr;
     char* clientData; /* determine size by reading first 32 bits of buffer recieved */
     char clientResponse[2048];
