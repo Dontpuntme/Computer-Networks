@@ -15,11 +15,8 @@
 /* struct for storing info for server clients */
 struct clientInfo {
     struct sockaddr_in cli_addr;
-    char buffer[2048];
-    char URLInfo[2048];
-     // we should maybe pick and be able to justify a different (maybe larger) buffer size depending on what QR decoder takes in
-    // maybe some fields here to keep track of client usage -- make sure they dont make too many requests per time frame
-    // ^ this information may be obtained by checking what we have written in the log files
+    char* clientData; /* determine size by reading first 32 bits of buffer recieved */
+    char clientResponse[2048];
 };
 
 class Server {

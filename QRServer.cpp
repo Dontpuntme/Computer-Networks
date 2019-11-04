@@ -49,16 +49,6 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
     clilen = sizeof(cli_addr);
 }
 
-/* Accept incoming connections */
-void Server::Accept() {
-    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-    if (newsockfd < 0) {
-        perror("Error accepting socket");
-        exit(1);
-    }
-    printf("Server socket accept success\n");
-}
-
 /* Accept incoming connections for specific client index*/
 void Server::Accept(int idx) {
     struct sockaddr_in curr_addr;
@@ -74,60 +64,45 @@ void Server::Accept(int idx) {
     clients[idx].cli_addr = curr_addr; /* record client ip address */
 }
 
-/* Read information from connected socket into buffer */
-void Server::Recieve() {
-    bzero(buffer, sizeof(buffer));
-    if (read(newsockfd, buffer, sizeof(buffer)-1) < 0) {
-        perror("Error reading from socket");
-    }
-}
-
 /* Read information from connected socket into buffer for specific client index*/
 void Server::Recieve(int idx) {
-    bzero(clients[idx].buffer, sizeof(clients[idx].buffer));
-    if (read(newsockfd, clients[idx].buffer, sizeof(clients[idx].buffer)-1) < 0) {
+    uint32_t size;
+    if (read(newsockfd, &size, sizeof(size)) < 0) { perror("error finding filesize");}
+    printf("File size found to be: %d\n", size);
+    clients[idx].clientData = (char* )malloc(sizeof(char) * size);
+    bzero(clients[idx].clientData, sizeof(clients[idx].clientData));
+    if (read(newsockfd, clients[idx].clientData, sizeof(clients[idx].clientData)-1) < 0) {
         perror("Error reading from socket");
-    }
-}
-
-/* Write information into connected socket */
-void Server::Return() {
-    if (write(newsockfd, buffer, sizeof(buffer)-1) < 0) {
-        perror("Error writing to socket");
     }
 }
 
 /* Write information into connected socket for specific client index*/
 void Server::Return(int idx) {
-    if (write(newsockfd, clients[idx].buffer, sizeof(clients[idx].buffer)-1) < 0) {
+    if (write(newsockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
         perror("Error writing to socket");
     }
 }
 
 /* Helper which handles client interaction from accept to return */
-void Server::Handle_Client() {
-    Server::Accept();
-    Server::Recieve();
-    Server::Return();
-}
-
-/* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
     char idxchar = (char) (idx + 48);
-    char* filename;
+    char* filename = (char*)malloc(sizeof(char)*12);
     asprintf(&filename, "QR%c.jpeg", idxchar);
     Server::Accept(idx);
     Server::Recieve(idx);
     Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
     Server::Return(idx);
+    free(filename);
 }
 
 void Server::ProcessQRCode(char* filename, int idx) {
     //filename qrcode.jpeg
+    printf("Processing QR code, filename: %s\n", filename);
+    printf("Client file buffer size: %d\n", sizeof(clients[idx].clientData));
     char inBuffer[1000];
     FILE * fp;
     fp = fopen(filename, "w+");
-    fprintf(fp,clients[idx].buffer); // not sure
+    fprintf(fp,clients[idx].clientData); // not sure
     fclose (fp);
     FILE* progOutput; // a file pointer representing the popen output
     
@@ -161,14 +136,14 @@ void Server::ProcessQRCode(char* filename, int idx) {
 
     int lineCounter = 0;
     int z = 0;
-    memset(clients[idx].URLInfo, (char)NULL, sizeof(clients[idx].URLInfo));
+    memset(clients[idx].clientResponse, (char)NULL, sizeof(clients[idx].clientResponse));
 
     for(int n = 0; n < 1000; n++) {
         if(inBuffer[n]=='\n') {
         lineCounter ++;
         }
         else if(lineCounter == 4) {
-            clients[idx].URLInfo[z]= inBuffer[n];
+            clients[idx].clientResponse[z]= inBuffer[n];
             z++;
         }
         if(lineCounter == 5) {

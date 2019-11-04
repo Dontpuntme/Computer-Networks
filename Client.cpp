@@ -4,7 +4,6 @@
 
 #define DEFAULT_PORT 2012
 #define DEFAULT_ADDRESS "127.0.0.1"
-#define MAX_BUFFER_SIZE 1024
 
 Client::Client(char* f, int portNo, char* addr) { 
     file = f;
@@ -15,8 +14,9 @@ Client::Client(char* f, int portNo, char* addr) {
 int Client::runClient() {
     int valread;
     
-    char buffer[MAX_BUFFER_SIZE] = {0};
-    char bufferTwo[MAX_BUFFER_SIZE] ={0}; /* TODO make sure the first 32 bits are reserved for file size */
+    char readBuffer[1024]; /* reading back input from server, URL + return code */
+    char* sendBuffer; /* 32 bit int + file data */
+    char* fileData; /* file data */
 
     if ((sock = socket(AF_INET, SOCK_STREAM,0))<0) {
         perror("Socket Creation error");
@@ -38,38 +38,42 @@ int Client::runClient() {
     } 
     printf("Connected to socket!\n");
 
-    int32_t filesize;
-    size_t newlen;
+
+    uint32_t filesize; /* 32 bit filesize (4 bytes) */
     FILE* fp;
     int symbol;
-    char* bufferData = bufferTwo + 32;
     if ((fp = fopen(file,"r")) != NULL) {
-        newlen = fread(bufferData, sizeof(char), MAX_BUFFER_SIZE-1, fp);
-        if (ferror(fp)) {
-            perror("Error reading file");
-        }
-        else {
-            bufferData[newlen++] = '\0';
+        if (fseek(fp, 0L, SEEK_END) == 0) {
+            filesize = ftell(fp); /* get buffer size */
+            fileData = (char *)malloc(sizeof(char) * filesize + 1);
+            if (fileData < 0) { /* file too big */
+                perror("Invalid filesize");
+                exit(1);
+            }
+            if (fseek(fp, 0L, SEEK_SET) != 0) { /* go back to start to read into buf */
+                size_t newlen = fread(fileData, sizeof(char), filesize, fp);
+                if (ferror(fp) != 0) { perror("Error reading file");}
+                else {fileData[newlen++] = '\0';} 
+            }
         }
         fclose(fp);
     }
     else {
         perror("File read error");
     }
-    printf("size: %d\n", newlen-1);
-    strcpy((char*)newlen, bufferTwo); /* todo fix writing first 32 bytes */
-    // printf("File opened!\n");
-    // fscanf(fp,bufferTwo,'c');
-    // printf("File read to buffer!\n"); 
-    // fclose(fp);
-    // printf("File closed!\n");
-    // int x = strlen(bufferTwo);
-    // printf("File size: %d bytes\n", x);
-    //write(sock, strncat((char*)x,bufferTwo,sizeof(x)+sizeof(bufferTwo)), strlen(file)); /* not sure if this should be write or send */
-    write(sock, bufferTwo, newlen);
-    printf("Sent message to server: %s\n", file); 
-    valread = read(sock , buffer, 1024); 
-    printf("Recieved response from server: %s\n",buffer); 
+
+    printf("size: %d\n", filesize);
+
+    /* creating buffer to send */
+    sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4 + 1));
+    strncpy(sendBuffer, (char*)filesize, 4);
+    strncat(sendBuffer, fileData, filesize + 1);
+
+    /* send message and recieve response */
+    write(sock, sendBuffer, filesize + 4 + 1);
+    printf("Sent file to server: %s\n", file); 
+    valread = read(sock , readBuffer, 1024); 
+    printf("Recieved response from server: %s\n",readBuffer); 
 
     return 0;
 }
