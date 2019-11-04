@@ -14,6 +14,7 @@
 
 /* struct for storing info for server clients */
 struct clientInfo {
+    int cli_sockfd;
     struct sockaddr_in cli_addr;
     char* clientData; /* determine size by reading first 32 bits of buffer recieved */
     char clientResponse[2048];
@@ -29,7 +30,6 @@ protected:
 
     /* socket-related attributes */
     int sockfd;
-    int newsockfd;
     int port;
 
     /* array of client info structs -- can store up to max_users  */

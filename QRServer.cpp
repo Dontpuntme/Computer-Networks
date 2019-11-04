@@ -55,8 +55,8 @@ void Server::Accept(int idx) {
     socklen_t curr_len;
     curr_addr = clients[idx].cli_addr;
     curr_len = sizeof(curr_addr);
-    newsockfd = accept(sockfd, (struct sockaddr *)&curr_addr, &curr_len);
-    if (newsockfd < 0) {
+    clients[idx].cli_sockfd = accept(sockfd, (struct sockaddr *)&curr_addr, &curr_len);
+    if (clients[idx].cli_sockfd < 0) {
         perror("Error accepting socket");
         exit(1);
     }
@@ -66,19 +66,19 @@ void Server::Accept(int idx) {
 
 /* Read information from connected socket into buffer for specific client index*/
 void Server::Recieve(int idx) {
-    uint32_t size;
-    if (read(newsockfd, &size, sizeof(size)) < 0) { perror("error finding filesize");}
-    printf("File size found to be: %d\n", size);
-    clients[idx].clientData = (char* )malloc(sizeof(char) * size);
+    uint32_t filesize;
+    if (read(clients[idx].cli_sockfd, &filesize, 4) < 0) { perror("error finding filesize");}
+    printf("File size found to be: %d\n", filesize);
+    clients[idx].clientData = (char* )malloc(sizeof(char) * filesize + 1);
     bzero(clients[idx].clientData, sizeof(clients[idx].clientData));
-    if (read(newsockfd, clients[idx].clientData, sizeof(clients[idx].clientData)-1) < 0) {
+    if (read(clients[idx].cli_sockfd, clients[idx].clientData, sizeof(clients[idx].clientData)-1) < 0) {
         perror("Error reading from socket");
     }
 }
 
 /* Write information into connected socket for specific client index*/
 void Server::Return(int idx) {
-    if (write(newsockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
+    if (write(clients[idx].cli_sockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
         perror("Error writing to socket");
     }
 }
@@ -98,7 +98,8 @@ void Server::Handle_Client(int idx) {
 void Server::ProcessQRCode(char* filename, int idx) {
     //filename qrcode.jpeg
     printf("Processing QR code, filename: %s\n", filename);
-    printf("Client file buffer size: %d\n", sizeof(clients[idx].clientData));
+    //printf("Client file buffer size: %d\n", (clients[idx].clientData));
+    clients[idx].clientData = clients[idx].clientData + 4; /* ignore first 4 bytes (filesize) */
     char inBuffer[1000];
     FILE * fp;
     fp = fopen(filename, "w+");
@@ -164,7 +165,7 @@ static void *Client_Thread(void *context) {
 Server::~Server() {
     /* free stuff */
     //free(clients);
-    close(newsockfd);
+    //close(newsockfd);
     close(sockfd);
 }
 

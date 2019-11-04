@@ -62,11 +62,19 @@ int Client::runClient() {
         perror("File read error");
     }
 
-    printf("size: %d\n", filesize);
+    printf("Filesize: %d bytes\n", filesize);
 
     /* creating buffer to send */
     sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4 + 1));
-    strncpy(sendBuffer, (char*)filesize, 4);
+    bzero(sendBuffer, sizeof(sendBuffer));
+    char c1 = (filesize >> (0)) & 0xff;
+    char c2 = (filesize >> (8)) & 0xff;
+    char c3 = (filesize >> (16)) & 0xff;
+    char c4 = (filesize >> (24)) & 0xff;
+    strncpy(sendBuffer, &c1, 1);
+    strncat(sendBuffer, &c2, 1);
+    strncat(sendBuffer, &c3, 1);
+    strncat(sendBuffer, &c4, 1);
     strncat(sendBuffer, fileData, filesize + 1);
 
     /* send message and recieve response */
