@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <iostream>
 #include <string.h>
+#include <stdint.h>
 
 class Client {
 protected:
