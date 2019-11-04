@@ -98,11 +98,12 @@ int main(int argc, char** argv) {
     }
     if(!fileFlag)
         {
-            printf("Error no file given\n");
+            printf("Error: no file given\n");
             return -1;
         }
 
     Client client = Client((char*)file.c_str(), port, (char*)servAddress.c_str()); /* should probably rewrite using only char*, unless we really want std::string */
+    printf("Client initialized\n");
     client.runClient();
     //client.~Client;
     return 0;

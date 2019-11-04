@@ -71,6 +71,7 @@ void Server::Accept(int idx) {
         exit(1);
     }
     printf("Server socket accept success\n");
+    clients[idx].cli_addr = curr_addr; /* record client ip address */
 }
 
 /* Read information from connected socket into buffer */
@@ -179,6 +180,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
 /* thread method to call handle_client */
 static void *Client_Thread(void *context) {
     struct threadArgs* args = (struct threadArgs *)context;
+    /* should probably use mutex around these */
     Server serv = *(args->s);
     int index = args->idx;
     serv.Handle_Client(index);
@@ -258,9 +260,11 @@ int main(int argc, char** argv) {
         struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
         arguments->s = &server;
         if (server.thread_idx < maxUsers) { /* <max threads in use, dispatch new one */
+            printf("Creating thread for index %d\n", server.thread_idx);
             arguments->idx = server.thread_idx;
             server.threads[server.thread_idx] = (pthread_t *)malloc(sizeof(pthread_t));
-            pthread_create(server.threads[server.thread_idx], NULL, &Client_Thread, (void *)arguments); /* note that this fn should inc. thread idx w/mutex */
+            pthread_create(server.threads[server.thread_idx], NULL, &Client_Thread, (void *)arguments); 
+            server.thread_idx++; /* maybe should do this in Client_Thread function instead */
         }
         else { /* join on oldest client idx, use that for new thread */ 
             arguments->idx = server.oldest_thread;
@@ -273,6 +277,7 @@ int main(int argc, char** argv) {
                 server.oldest_thread++;
             }
         }
+        usleep(1000);
         // TODO update/create log file
     }
     
