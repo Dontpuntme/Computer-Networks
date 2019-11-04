@@ -51,9 +51,9 @@ int Client::runClient() {
                 exit(1);
             }
             if (fseek(fp, 0L, SEEK_SET) != 0) { /* go back to start to read into buf */
-                size_t newlen = fread(fileData, sizeof(char), filesize, fp);
+                fread(fileData, sizeof(char), filesize, fp);
                 if (ferror(fp) != 0) { perror("Error reading file");}
-                else {fileData[newlen++] = '\0';} 
+                else {fileData[filesize + 1] = '\0';} 
             }
         }
         fclose(fp);
@@ -76,6 +76,8 @@ int Client::runClient() {
     strncat(sendBuffer, &c3, 1);
     strncat(sendBuffer, &c4, 1);
     strncat(sendBuffer, fileData, filesize + 1);
+
+    printf("test: %d\n", strlen(fileData)); /* why is this happening */
 
     /* send message and recieve response */
     write(sock, sendBuffer, filesize + 4 + 1);

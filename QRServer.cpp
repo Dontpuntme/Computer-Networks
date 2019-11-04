@@ -71,7 +71,7 @@ void Server::Recieve(int idx) {
     printf("File size found to be: %d\n", filesize);
     clients[idx].clientData = (char* )malloc(sizeof(char) * filesize + 1);
     bzero(clients[idx].clientData, sizeof(clients[idx].clientData));
-    if (read(clients[idx].cli_sockfd, clients[idx].clientData, sizeof(clients[idx].clientData)-1) < 0) {
+    if (read(clients[idx].cli_sockfd, clients[idx].clientData, filesize + 1) < 0) {
         perror("Error reading from socket");
     }
 }
@@ -87,18 +87,19 @@ void Server::Return(int idx) {
 void Server::Handle_Client(int idx) {
     char idxchar = (char) (idx + 48);
     char* filename = (char*)malloc(sizeof(char)*12);
-    asprintf(&filename, "QR%c.jpeg", idxchar);
+    asprintf(&filename, "QR%c.png", idxchar);
     Server::Accept(idx);
     Server::Recieve(idx);
     Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
     Server::Return(idx);
     free(filename);
+    printf("Finished handling client index %d\n", idx);
 }
 
 void Server::ProcessQRCode(char* filename, int idx) {
     //filename qrcode.jpeg
     printf("Processing QR code, filename: %s\n", filename);
-    //printf("Client file buffer size: %d\n", (clients[idx].clientData));
+    printf("Client file buffer size: %d\n", strlen(clients[idx].clientData));
     clients[idx].clientData = clients[idx].clientData + 4; /* ignore first 4 bytes (filesize) */
     char inBuffer[1000];
     FILE * fp;
@@ -116,7 +117,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
  
     // make sure that popen succeeded
     if(!progOutput) {
-        perror("npopen failedn");
+        perror("popen failed");
         exit(1);
     }
  
@@ -151,6 +152,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
             break;
         }
     }
+    printf("Done processing QR code\n");
 }
 
 /* thread method to call handle_client */
