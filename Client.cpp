@@ -35,11 +35,16 @@ int Client::runClient() {
         perror("Connection Failed"); 
         exit(1); 
     } 
-    FILE * fp;
+    printf("Connected to socket!\n");
+    FILE* fp;
     fp = fopen(file,"r+");
-    fscanf(fp,bufferTwo,'c'); 
-    fclose (fp);
+    printf("File opened!\n");
+    fscanf(fp,bufferTwo,'c');
+    printf("File read to buffer!\n"); 
+    fclose(fp);
+    printf("File closed!\n");
     int x = strlen(bufferTwo);
+    printf("File size: %d bytes\n", x);
     write(sock, strncat((char*)x,bufferTwo,sizeof(x)+sizeof(bufferTwo)), strlen(file)); /* not sure if this should be write or send */
     printf("Sent message to server: %s\n", file); 
     valread = read(sock , buffer, 1024); 
