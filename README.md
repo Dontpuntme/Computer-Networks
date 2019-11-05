@@ -2,4 +2,4 @@
 
 Connor Mclaughlin and David Martindale
 
-Usage: `./QRServer <port> <maxRateRequests> <maxRateWindow> <maxUsers> <timeOut>`
+Usage: `./QRServer -p <port> -m <maxRateRequests> -r <maxRateWindow> -u <maxUsers> -t <timeOut>`

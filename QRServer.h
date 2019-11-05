@@ -33,19 +33,17 @@ protected:
     int sockfd;
     int port;
 
-    /* array of client info structs -- can store up to max_users  */
-    struct clientInfo* clients;
-
     /* old fields for accept/recieve/return without arguments -- can mostly ignore */
     char buffer[2048]; 
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t clilen;
 
 public:
-    /* leaving these thread-fields public for now, will revisit later */
-    int thread_idx;
-    int oldest_thread;
-    pthread_t** threads;
+    int* available; /* whether or not a given thread is available to reclaim */
+    struct clientInfo* clients; /* array of client info structs -- can store up to max_users  */
+    int thread_idx; /* number of active/running threads */
+    int oldest_thread; /* maybe worthless */
+    pthread_t** threads; /* list of pointers to threads */
 
     /* methods */
     Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut);
@@ -57,6 +55,7 @@ public:
     void Return(int idx);
     void Handle_Client();
     void Handle_Client(int idx);
+    void Reject(); 
     void ProcessQRCode(char* filename, int idx);
     static void *Client_Thread(void *context);
     ~Server(); 

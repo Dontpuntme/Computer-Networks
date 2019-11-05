@@ -27,8 +27,12 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
     rs = rateSeconds;
 
     threads = (pthread_t **)malloc(sizeof(pthread_t *)*users); /* allocate array of pthread pointers, will allocate actual threads as needed */
+    available = (int *)malloc(sizeof(int)*maxUsers);
 
     clients = (struct clientInfo *)malloc(sizeof(struct clientInfo) * maxUsers);
+    for (int i=0; i<maxUsers; i++) {
+        available[i] = 1; /* mark all client structs as inactive */
+    }
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_addr.s_addr = INADDR_ANY;
@@ -83,6 +87,19 @@ void Server::Return(int idx) {
     if (write(clients[idx].cli_sockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
         perror("Error writing to socket");
     }
+}
+
+/* Immediately accept/reject client (deals with maxUsers/ratelimit) */
+void Server::Reject() {
+    struct sockaddr_in curr_addr;
+    socklen_t curr_len;
+    int rejectfd;
+    char* response = (char*)"Client is either too busy or you have gone over your use limit. Try again later\n";
+    if ((rejectfd = accept(sockfd, (struct sockaddr *)&curr_addr, &curr_len) < 0)) {perror("Error accepting bad client");};
+    if (write(rejectfd, response, sizeof(response) < 0)) {
+        perror("Error writing to socket");
+    }
+    close(rejectfd);
 }
 
 /* Helper which handles client interaction from accept to return */
@@ -170,11 +187,18 @@ static void *Client_Thread(void *context) {
     /* should probably use mutex around these */
     Server serv = *(args->s);
     int index = args->idx;
+    args->s->available[index] = 0; /* in use */
     serv.Handle_Client(index);
+    args->s->available[index] = 1; /* done processing */
+    printf("Thread %d is now available\n", index);
+    return (void*)NULL;
 }
 
 Server::~Server() {
-    /* free stuff */
+    /* make sure to clean up threads */
+    for (int i=0; i<users; i++) {
+        pthread_join(*(threads[i]), NULL);
+    }
     free(clients);
     close(sockfd);
 }
@@ -183,7 +207,7 @@ Server::~Server() {
 int main(int argc, char** argv) {
     /* TODO parse arguments in form ./QRServer --PORT=2050 ... with getopt() */
     int port, rateRequests, rateSeconds, maxUsers, timeOut;
-    int curr_users;
+    int pid;
     char testMessage[] = "Hello\n";
     char testMessage2[] = "Hello2\n";
     char testMessage3[] = "Hello3\n";
@@ -241,33 +265,35 @@ int main(int argc, char** argv) {
 
     Server server = Server(port, rateRequests, rateSeconds, maxUsers, timeOut); 
 
-    /* keep accepting clients/managing which thread they go on */
-    while(true) {
-        struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
-        arguments->s = &server;
-        if (server.thread_idx < maxUsers) { /* <max threads in use, dispatch new one */
+    /* have MaxUsers number of threads running/ready to accept new connections at any given time */
+    while (true) {
+        if (server.thread_idx < maxUsers) { /* make sure we have at least MaxUers threads running*/
+            struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
+            arguments->s = &server;
             printf("Creating thread for index %d\n", server.thread_idx);
             arguments->idx = server.thread_idx;
             server.threads[server.thread_idx] = (pthread_t *)malloc(sizeof(pthread_t));
             pthread_create(server.threads[server.thread_idx], NULL, &Client_Thread, (void *)arguments); 
             server.thread_idx++; /* maybe should do this in Client_Thread function instead */
         }
-        else { /* join on oldest client idx, use that for new thread -- TODO fix*/ 
-            printf("Waiting for thread %d to open up for new client\n", server.oldest_thread);
-            arguments->idx = server.oldest_thread;
-            pthread_join(*(server.threads[server.oldest_thread]), NULL);
-            printf("Thread open, tending to client %d now\n", server.oldest_thread);
-            pthread_create(server.threads[server.oldest_thread], NULL, &Client_Thread, (void *)arguments);
-            if (server.oldest_thread == maxUsers - 1) { /* loop back around */
-                server.oldest_thread = 0;
-            }
-            else { /* just increment */
-                server.oldest_thread++;
+        else { /* we must reject other incoming connections and check for thread completion */
+            for (int i=0; i<maxUsers; i++) {
+                printf("Checking if thread %d has finished\n", i);
+                if (server.available[i] = 1) { /* loop through clients and re-dispatch completed threads */
+                    printf("reclaiming thread %d\n", i);
+                    struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
+                    arguments->s = &server;
+                    arguments->idx = i;
+                    pthread_join(*(server.threads[i]), NULL);
+                    printf("joined thread %d\n", i);
+                    pthread_create(server.threads[i], NULL, &Client_Thread, (void *)arguments);
+                }
             }
         }
-        usleep(1000);
-        // TODO update/create log file
+        usleep(100000); /* less spinning */
+        /* TODO write to log file somewhere */
     }
+    /* TODO have MaxUsers+1 thread which accepts other clients and immediately rejects them */
     
     return 0;
 }

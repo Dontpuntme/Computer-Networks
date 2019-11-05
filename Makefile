@@ -1,7 +1,7 @@
-SOURCES := Testing.cpp QRServer.cpp Client.cpp
+SOURCES := QRServer.cpp Client.cpp
 HEADERS := QRServer.h Client.h
 LINK := -pthread
-OUTPUT := Testing QRServer Client
+OUTPUT := QRServer Client
 
 
 SERVER_SOURCES := QRServer.cpp
