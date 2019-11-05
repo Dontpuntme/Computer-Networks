@@ -11,6 +11,16 @@
 
 /* Constructor, creates server socket and attempts to accept client socket */
 Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut){
+    FILE * pFile;
+    pFile = fopen("log.txt","w");
+    time_t now = std::time(0);
+    struct tm *timeinfo = (struct tm *)malloc(sizeof(struct tm));
+    timeinfo = localtime(&now);
+    const char* message = "Server booted up :D";
+    fprintf(pFile,"%d-%d-%d %d:%d:%d %s\n",timeinfo->tm_year+1900,timeinfo->tm_mon+1,timeinfo->tm_mday,timeinfo->tm_hour,
+    timeinfo->tm_min,timeinfo->tm_sec, message);
+    fclose(pFile);
+    
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("Error creating socket");
@@ -61,6 +71,21 @@ void Server::Accept(int idx) {
     curr_addr = clients[idx].cli_addr;
     curr_len = sizeof(curr_addr);
     clients[idx].cli_sockfd = accept(sockfd, (struct sockaddr *)&curr_addr, &curr_len);
+    
+    /* handle timeouts */
+    struct timeval tv;
+    tv.tv_sec = time; /* timeout val */
+    setsockopt(clients[idx].cli_sockfd, SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
+    
+    /* handle if we should reject */
+    if (numThreads >= users) { 
+        const char* response = "Server is either too busy or you have gone over your use limit. Try again later\n";
+        printf("%s\n", response);
+        if (write(clients[idx].cli_sockfd, response, sizeof(response) < 0)) {
+            perror("Error writing to socket");
+        }
+        close(clients[idx].cli_sockfd);
+    }
     if (clients[idx].cli_sockfd < 0) {
         perror("Error accepting socket");
         exit(1);
@@ -74,7 +99,17 @@ void Server::Accept(int idx) {
 /* Read information from connected socket into buffer for specific client index*/
 void Server::Recieve(int idx) {
     uint32_t filesize = 0;
-    if (read(clients[idx].cli_sockfd, &filesize, 4) < 0) { perror("error finding filesize");}
+    if (read(clients[idx].cli_sockfd, &filesize, 4) < 0) { /* failed to read because timeout */
+        uint32_t retcode = 2;
+        const char* failMessage = "Server timeout";
+        uint32_t msgLength = strlen(failMessage) + 1;
+        write(clients[idx].cli_sockfd, &retcode, 4); /* return code */
+        write(clients[idx].cli_sockfd, &msgLength, 4); /* return code */
+        write(clients[idx].cli_sockfd, &failMessage, msgLength); /* return code */
+        const char* message = "Client interaction timed out";
+        Write_Text_To_Log_File(idx,message);
+        return;
+    }
     printf("File size found to be: %d\n", filesize);
     clients[idx].filesize = filesize;
     clients[idx].clientData = (char* )malloc(sizeof(char) * filesize); /* note that we may need to add 4 to account for filesize */
@@ -88,6 +123,14 @@ void Server::Recieve(int idx) {
 
 /* Write information into connected socket for specific client index*/
 void Server::Return(int idx) {
+    uint32_t retcode = 0; /* success code */
+    uint32_t responseSize = strlen(clients[idx].clientResponse);
+    if (write(clients[idx].cli_sockfd, &retcode, 4) < 0) {
+        perror("Error writing to socket");
+    }
+    if (write(clients[idx].cli_sockfd, &responseSize, 4) < 0) {
+        perror("Error writing to socket");
+    }
     if (write(clients[idx].cli_sockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
         perror("Error writing to socket");
     }
@@ -111,16 +154,13 @@ void Server::Reject() {
 
 /* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
-    sleep(3); /* for testing concurrency */
+    sleep(1); /* for testing concurrency */
     char idxchar = (char) (idx + 48);
     char* filename = (char*)malloc(sizeof(char)*12);
     asprintf(&filename, "QR%c.png", idxchar);
     Server::Recieve(idx);
-    //printf("Recieved data from client on thread %d\n", idx);
-    Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
-    //printf("Processed QR code on thread %d\n", idx);
+    Server::ProcessQRCode(filename, idx);
     Server::Return(idx);
-    //printf("Returned result to client on thread %d\n", idx);
     free(filename);
     close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
@@ -137,9 +177,6 @@ void Server::Write_Text_To_Log_File(int idx, const char* message) {
     fclose(pFile);
 }
 void Server::ProcessQRCode(char* filename, int idx) {
-    //filename qrcode.jpeg
-    //printf("Processing QR code, filename: %s\n", filename);
-    //printf("Client image file size: %d\n", clients[idx].filesize);
     clients[idx].clientData = clients[idx].clientData; /* add 4 to ignore first 4 bytes (filesize) */
     char inBuffer[1000];
 
@@ -149,8 +186,6 @@ void Server::ProcessQRCode(char* filename, int idx) {
     std::ofstream output(filename, std::ios::binary);
     output.write(clients[idx].clientData, clients[idx].filesize);
     output.close();
-    //fwrite(clients[idx].clientData, clients[idx].filesize, 1, fp);
-    //fclose (fp);
 
     /* run java program for QR code */
     FILE* progOutput; // a file pointer representing the popen output
@@ -187,7 +222,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
 
     for(int n = 0; n < 1000; n++) {
         if(inBuffer[n]=='\n') {
-        lineCounter ++;
+            lineCounter++;
         }
         else if(lineCounter == 4) {
             clients[idx].clientResponse[z]= inBuffer[n];
@@ -197,8 +232,17 @@ void Server::ProcessQRCode(char* filename, int idx) {
             break;
         }
     }
+    if (lineCounter < 4) { /* no barcode was found */
+        uint32_t retcode = 1;
+        uint32_t msgLength = 0;
+        write(clients[idx].cli_sockfd, &retcode, 4); /* return code */
+        write(clients[idx].cli_sockfd, &msgLength, 4); /* return code */
+        const char* message = "Client image file unable to be decoded";
+        Write_Text_To_Log_File(idx,message);
+    }
     printf("Done processing QR code\n");
     free(clients[idx].clientData); /* cleanup memory */
+    remove(filename);
 }
 
 /* thread method to call handle_client */
@@ -276,7 +320,7 @@ int main(int argc, char** argv) {
 
         case 't':
             timeOut = std::stoi(optarg);
-            std::cout << "Port set to: " << timeOut << std::endl;
+            std::cout << "Timeout set to: " << timeOut << std::endl;
             break;
         case '?': // Unrecognized option
         default:
@@ -316,52 +360,19 @@ int main(int argc, char** argv) {
         }
         else {
             int status;
-            int processEnded = 0;
+            int statloc;
             for (int i=0; i<maxUsers; i++) {
-                if ((status = waitpid(pids[i], &status, WNOHANG) == pids[i])) { /* process has finished */
-                    printf("Process complete, number of users %d --> %d\n", numThreads, numThreads-1);
-                    numThreads--;
-                    pids[i] = -1;
-                    processEnded = 1;
-                    continue;
+                if (pids[i] != -1 ) {
+                    if ((status = waitpid(pids[i], &statloc, WNOHANG) == pids[i])) { /* process has finished */
+                        printf("Process complete, number of users %d --> %d\n", numThreads, numThreads-1);
+                        numThreads--;
+                        pids[i] = -1;
+                        break;
+                    }
                 }
-            }
-            if (processEnded) {
-                continue;
-            }
-            else {
-                printf("rejecting process\n");
-                server.Reject();
             }
         }
     }
-
-    /* accept connections on main thread, pass off to other threads, update maxusers, deny bad connections */
-    // int index = 0;
-    // while (true) {
-    //     if (numThreads < maxUsers) { /* check if we can take another connection */
-    //         for (int i = 0; i<maxUsers; i++) { /* find empty index */
-    //             if (threadStatus[i] == 0) {
-    //                 index = i;
-    //                 threadStatus[i] = 1;
-    //                 break;
-    //             }
-    //         }
-    //         server.Accept(index);
-    //         pthread_mutex_lock(&mutex);
-    //         numThreads = numThreads + 1;
-    //         threadStatus[index] = 1;
-    //         pthread_mutex_unlock(&mutex);
-    //         struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
-    //         arguments->s = &server;
-    //         arguments->idx = index;
-    //         printf("dispatching thread on index %d\n", index);
-    //         threads[index] = (pthread_t *)malloc(sizeof(pthread_t));
-    //         pthread_create(threads[index], NULL, &Client_Thread, (void*)arguments);
-    //         printf("done managing thread %d from main\n", index);
-    //     }
-    //     usleep(10000);
-    // }
 
     return 0;
 }

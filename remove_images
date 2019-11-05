@@ -1,6 +1,0 @@
-#!/bin/bash
-
-for i in {0..10}
-do
-    rm -f QR$i.png
-done

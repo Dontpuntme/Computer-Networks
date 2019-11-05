@@ -28,7 +28,7 @@ struct clientInfo {
     uint32_t filesize;
     struct sockaddr_in cli_addr;
     char* clientData; /* determine size by reading first 32 bits of buffer recieved */
-    char clientResponse[2048];
+    char clientResponse[1024];
 };
 
 class Server {

@@ -15,7 +15,7 @@ Client::Client(char* f, int portNo, char* addr) {
 int Client::runClient() {
     int valread;
     
-    char readBuffer[1024]; /* reading back input from server, URL + return code */
+    char* readBuffer; /* reading back input from server, URL + return code */
     char* sendBuffer; /* 32 bit int + file data */
     char* fileData; /* file data */
 
@@ -62,30 +62,25 @@ int Client::runClient() {
 
     printf("Filesize: %d bytes\n", filesize);
 
-    // /* creating buffer to send */
-    // sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4));
-    // bzero(sendBuffer, sizeof(sendBuffer));
-    // char c1 = (filesize >> (0)) & 0xff;
-    // char c2 = (filesize >> (8)) & 0xff;
-    // char c3 = (filesize >> (16)) & 0xff;
-    // char c4 = (filesize >> (24)) & 0xff;
-    // strncpy(sendBuffer, &c1, 1);
-    // strncat(sendBuffer, &c2, 1);
-    // strncat(sendBuffer, &c3, 1);
-    // strncat(sendBuffer, &c4, 1);
-    // strncat(sendBuffer, fileData, filesize);
-
-    // /* send message and recieve response */
-    // write(sock, sendBuffer, filesize + 4);
-
-    /* testing with sending two messages */
     write(sock, &filesize, 4);
     write(sock, fileData, filesize);
     printf("Sent file to server: %s\n", file); 
 
-    valread = read(sock , readBuffer, 1024); 
-    printf("Recieved response from server: %s\n",readBuffer); 
+    uint32_t retcode;
+    uint32_t respSize;
+    int read1 = read(sock, &retcode, 4);
+    int read2 = read(sock, &respSize, 4);
+    readBuffer = (char *)malloc(sizeof(char) * respSize + 1);
+    
+    if (retcode != 1) {
+    int read3 = read(sock, readBuffer, respSize+1);
+    printf("Recieved response from server: code %d, size %d, contents %s\n",retcode, respSize, readBuffer); 
+    }
+    else{
+        printf("Recieved response from server: code %d, size %d\n",retcode, respSize); 
+    }
     close(sock);
+    free(readBuffer);
     return 0;
 }
 
