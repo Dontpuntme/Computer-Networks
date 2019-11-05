@@ -62,7 +62,7 @@ int Client::runClient() {
 
     printf("Filesize: %d bytes\n", filesize);
 
-    /* creating buffer to send */
+    // /* creating buffer to send */
     // sendBuffer = (char*)malloc(sizeof(char) * (filesize + 4));
     // bzero(sendBuffer, sizeof(sendBuffer));
     // char c1 = (filesize >> (0)) & 0xff;
@@ -75,17 +75,17 @@ int Client::runClient() {
     // strncat(sendBuffer, &c4, 1);
     // strncat(sendBuffer, fileData, filesize);
 
-    /* send message and recieve response */
+    // /* send message and recieve response */
     // write(sock, sendBuffer, filesize + 4);
-    // printf("Sent file to server: %s\n", file); 
-    // valread = read(sock , readBuffer, 1024); 
-    // printf("Recieved response from server: %s\n",readBuffer); 
 
+    /* testing with sending two messages */
     write(sock, &filesize, 4);
     write(sock, fileData, filesize);
     printf("Sent file to server: %s\n", file); 
-    valread = read(sock , readBuffer, 1024); 
 
+    valread = read(sock , readBuffer, 1024); 
+    printf("Recieved response from server: %s\n",readBuffer); 
+    close(sock);
     return 0;
 }
 
@@ -146,6 +146,5 @@ int main(int argc, char** argv) {
     Client client = Client((char*)file.c_str(), port, (char*)servAddress.c_str()); /* should probably rewrite using only char*, unless we really want std::string */
     printf("Client initialized\n");
     client.runClient();
-    //client.~Client;
     return 0;
 }

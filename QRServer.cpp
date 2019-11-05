@@ -161,6 +161,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
         }
     }
     printf("Done processing QR code\n");
+    free(clients[idx].clientData); /* cleanup memory */
 }
 
 /* thread method to call handle_client */
@@ -174,8 +175,7 @@ static void *Client_Thread(void *context) {
 
 Server::~Server() {
     /* free stuff */
-    //free(clients);
-    //close(newsockfd);
+    free(clients);
     close(sockfd);
 }
 
@@ -252,9 +252,11 @@ int main(int argc, char** argv) {
             pthread_create(server.threads[server.thread_idx], NULL, &Client_Thread, (void *)arguments); 
             server.thread_idx++; /* maybe should do this in Client_Thread function instead */
         }
-        else { /* join on oldest client idx, use that for new thread */ 
+        else { /* join on oldest client idx, use that for new thread -- TODO fix*/ 
+            printf("Waiting for thread %d to open up for new client\n", server.oldest_thread);
             arguments->idx = server.oldest_thread;
             pthread_join(*(server.threads[server.oldest_thread]), NULL);
+            printf("Thread open, tending to client %d now\n", server.oldest_thread);
             pthread_create(server.threads[server.oldest_thread], NULL, &Client_Thread, (void *)arguments);
             if (server.oldest_thread == maxUsers - 1) { /* loop back around */
                 server.oldest_thread = 0;

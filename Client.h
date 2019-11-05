@@ -22,7 +22,7 @@ protected:
 public:
     Client(char* f, int portNo, char* addr);
     int runClient();
-    ~Client();
+    virtual ~Client();
 };
 
 #endif
