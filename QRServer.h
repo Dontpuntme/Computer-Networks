@@ -12,6 +12,15 @@
 #include <pthread.h>
 #include <netinet/in.h>
 
+/* global thread-related fields */
+pthread_t** threads; /* list of pointers to threads */
+int numThreads; /* protect with mutex */
+int* threadStatus; /* whether or not thread is done */
+
+/* taking care of synchronization issues */
+pthread_mutex_t mutex;
+
+
 /* struct for storing info for server clients */
 struct clientInfo {
     int cli_sockfd;
@@ -39,11 +48,7 @@ protected:
     socklen_t clilen;
 
 public:
-    int* available; /* whether or not a given thread is available to reclaim */
     struct clientInfo* clients; /* array of client info structs -- can store up to max_users  */
-    int thread_idx; /* number of active/running threads */
-    int oldest_thread; /* maybe worthless */
-    pthread_t** threads; /* list of pointers to threads */
 
     /* methods */
     Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int timeOut);
