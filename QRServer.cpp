@@ -112,6 +112,15 @@ void Server::Recieve(int idx) {
     }
     printf("File size found to be: %d\n", filesize);
     clients[idx].filesize = filesize;
+    if (filesize > UINT32_MAX || filesize < 0) { /* invalid filesize */
+        uint32_t retcode = 1;
+        uint32_t msgLength = 0;
+        write(clients[idx].cli_sockfd, &retcode, 4); /* return code */
+        write(clients[idx].cli_sockfd, &msgLength, 4); /* return code */
+        const char* message = "Client image file invalid size";
+        Write_Text_To_Log_File(idx,message);
+        return;
+    }
     clients[idx].clientData = (char* )malloc(sizeof(char) * filesize); /* note that we may need to add 4 to account for filesize */
     bzero(clients[idx].clientData, filesize);
     if (read(clients[idx].cli_sockfd, clients[idx].clientData, filesize) < 0) {
