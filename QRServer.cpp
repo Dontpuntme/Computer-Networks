@@ -55,18 +55,6 @@ Server::Server(int portNo, int rateRequests, int rateSeconds, int maxUsers, int 
 
 /* Accept incoming connections for specific client index*/
 void Server::Accept(int idx) {
-    if (idx >= users) { /* invalid, we should reject */
-        printf("Rejecting user\n");
-        int rejectfd;
-        struct sockaddr_in temp_addr;
-        socklen_t temp_len;
-        rejectfd = accept(sockfd, (struct sockaddr *)&temp_addr, &temp_len);
-        char* response = (char*)"Client is either too busy or you have gone over your use limit. Try again later\n";
-        if (write(rejectfd, response, sizeof(response) < 0)) {
-            perror("Error writing to socket");
-        }
-        close(rejectfd);
-    }
     /* we are fine to accept socket and store info in client struct as usual */
     struct sockaddr_in curr_addr;
     socklen_t curr_len;
@@ -111,8 +99,9 @@ void Server::Return(int idx) {
 void Server::Reject() {
     struct sockaddr_in curr_addr;
     socklen_t curr_len;
+    curr_len = sizeof(curr_addr);
     int rejectfd;
-    char* response = (char*)"Client is either too busy or you have gone over your use limit. Try again later\n";
+    const char* response = "Client is either too busy or you have gone over your use limit. Try again later\n";
     if ((rejectfd = accept(sockfd, (struct sockaddr *)&curr_addr, &curr_len) < 0)) {perror("Error accepting bad client");};
     if (write(rejectfd, response, sizeof(response) < 0)) {
         perror("Error writing to socket");
@@ -122,16 +111,16 @@ void Server::Reject() {
 
 /* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
-    sleep(5);
+    sleep(3); /* for testing concurrency */
     char idxchar = (char) (idx + 48);
     char* filename = (char*)malloc(sizeof(char)*12);
     asprintf(&filename, "QR%c.png", idxchar);
     Server::Recieve(idx);
-    printf("Recieved data from client on thread %d\n", idx);
+    //printf("Recieved data from client on thread %d\n", idx);
     Server::ProcessQRCode(filename, idx); /* TODO figure out if we should deal with multiple filenames or just have mutexes */
-    printf("Processed QR code on thread %d\n", idx);
+    //printf("Processed QR code on thread %d\n", idx);
     Server::Return(idx);
-    printf("Returned result to client on thread %d\n", idx);
+    //printf("Returned result to client on thread %d\n", idx);
     free(filename);
     close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
@@ -149,8 +138,8 @@ void Server::Write_Text_To_Log_File(int idx, const char* message) {
 }
 void Server::ProcessQRCode(char* filename, int idx) {
     //filename qrcode.jpeg
-    printf("Processing QR code, filename: %s\n", filename);
-    printf("Client image file size: %d\n", clients[idx].filesize);
+    //printf("Processing QR code, filename: %s\n", filename);
+    //printf("Client image file size: %d\n", clients[idx].filesize);
     clients[idx].clientData = clients[idx].clientData; /* add 4 to ignore first 4 bytes (filesize) */
     char inBuffer[1000];
 
@@ -168,7 +157,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
     char* cmd; /* string of java command */
     char* base = (char *)"java -cp javase.jar:core.jar com.google.zxing.client.j2se.CommandLineRunner";
     asprintf(&cmd, "%s %s", base, filename);
-    printf("Running command: %s\n", cmd);
+    //printf("Running command: %s\n", cmd);
     progOutput = popen(cmd, "r");
  
     // make sure that popen succeeded
@@ -300,58 +289,75 @@ int main(int argc, char** argv) {
     
     /* working instead with processes */
     int index = 0;
+    pid_t* pids = (pid_t *)malloc(sizeof(pid_t)*maxUsers); /* list of pids */
+    for (int i=0; i<maxUsers; i++) {
+        pids[i] = -1; /* initialize list of pids */
+    }
     while (true) {
         if (numThreads < maxUsers) { /* check if we can take another connection */
             for (int i = 0; i<maxUsers; i++) { /* find empty index */
-                if (threadStatus[i] == 0) {
+                if (pids[i] == -1) {
                     index = i;
-                    threadStatus[i] = 1;
                     break;
                 }
             }
-            numThreads = numThreads + 1;
             server.Accept(index);
             printf("num threads: %d\n", numThreads);
+            numThreads = numThreads + 1;
             if ((pid = fork()) < 0) { perror("Fork error"); }
             else if (pid == 0) { /* child process, handle client */
                 server.Handle_Client(index);
-                pthread_mutex_lock(&mutex);
-                threadStatus[index] = 0;
-                numThreads = numThreads - 1;
-                pthread_mutex_unlock(&mutex);
                 return 0;
             }
             else { /* parent */
+                pids[index] = pid;
                 //goes back to top of loop to deal with next client
             }
         }
         else {
-            server.Reject();
+            int status;
+            int processEnded = 0;
+            for (int i=0; i<maxUsers; i++) {
+                if ((status = waitpid(pids[i], &status, WNOHANG) == pids[i])) { /* process has finished */
+                    printf("Process complete, number of users %d --> %d\n", numThreads, numThreads-1);
+                    numThreads--;
+                    pids[i] = -1;
+                    processEnded = 1;
+                    continue;
+                }
+            }
+            if (processEnded) {
+                continue;
+            }
+            else {
+                printf("rejecting process\n");
+                server.Reject();
+            }
         }
     }
 
     /* accept connections on main thread, pass off to other threads, update maxusers, deny bad connections */
     // int index = 0;
     // while (true) {
-    //     index = numThreads;
-    //     printf("Attempting to accept a client on thread %d\n", numThreads);
-    //     server.Accept(index); /* will reject immediately if numThreads out of bounds */
-    //     printf("Client accepted\n");
-    //     if (index < maxUsers) { /* handle request with thread */
-    //         // if (threadStatus[numThreads] != 0) {/* thread is not available */
-    //         //     pthread_join(*(threads[index]), NULL);
-    //         //     numThreads--;
-    //         // }
+    //     if (numThreads < maxUsers) { /* check if we can take another connection */
+    //         for (int i = 0; i<maxUsers; i++) { /* find empty index */
+    //             if (threadStatus[i] == 0) {
+    //                 index = i;
+    //                 threadStatus[i] = 1;
+    //                 break;
+    //             }
+    //         }
+    //         server.Accept(index);
+    //         pthread_mutex_lock(&mutex);
+    //         numThreads = numThreads + 1;
+    //         threadStatus[index] = 1;
+    //         pthread_mutex_unlock(&mutex);
     //         struct threadArgs* arguments = (struct threadArgs *)malloc(sizeof(struct threadArgs));
     //         arguments->s = &server;
     //         arguments->idx = index;
     //         printf("dispatching thread on index %d\n", index);
-    //         pthread_mutex_lock(&mutex);
     //         threads[index] = (pthread_t *)malloc(sizeof(pthread_t));
     //         pthread_create(threads[index], NULL, &Client_Thread, (void*)arguments);
-    //         threadStatus[index] = 1;
-    //         numThreads = numThreads + 1;
-    //         pthread_mutex_unlock(&mutex);
     //         printf("done managing thread %d from main\n", index);
     //     }
     //     usleep(10000);
