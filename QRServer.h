@@ -58,6 +58,7 @@ public:
     void Reject(); 
     void ProcessQRCode(char* filename, int idx);
     static void *Client_Thread(void *context);
+    void Write_Text_To_Log_File(int idx, char* message);
     ~Server(); 
 };
 
