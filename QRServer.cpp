@@ -122,9 +122,7 @@ void Server::Reject() {
 
 /* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
-    pthread_mutex_lock(&mutex);
-    numThreads++;
-    pthread_mutex_unlock(&mutex);
+    sleep(5);
     char idxchar = (char) (idx + 48);
     char* filename = (char*)malloc(sizeof(char)*12);
     asprintf(&filename, "QR%c.png", idxchar);
@@ -137,11 +135,6 @@ void Server::Handle_Client(int idx) {
     free(filename);
     close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
-    pthread_mutex_lock(&mutex);
-    threadStatus[idx] = 0;
-    numThreads--;
-    pthread_mutex_unlock(&mutex);
-    return (void)0;
 }
 void Server::Write_Text_To_Log_File(int idx, const char* message) {
     FILE * pFile;
@@ -316,10 +309,17 @@ int main(int argc, char** argv) {
                     break;
                 }
             }
+            numThreads = numThreads + 1;
             server.Accept(index);
+            printf("num threads: %d\n", numThreads);
             if ((pid = fork()) < 0) { perror("Fork error"); }
             else if (pid == 0) { /* child process, handle client */
                 server.Handle_Client(index);
+                pthread_mutex_lock(&mutex);
+                threadStatus[index] = 0;
+                numThreads = numThreads - 1;
+                pthread_mutex_unlock(&mutex);
+                return 0;
             }
             else { /* parent */
                 //goes back to top of loop to deal with next client
