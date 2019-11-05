@@ -67,7 +67,7 @@ void Server::Accept(int idx) {
     }
     printf("Server socket accept success\n");
     clients[idx].cli_addr = curr_addr; /* record client ip address */
-    char * message = "Client Accepted";
+    const char * message = "Client Accepted";
     Write_Text_To_Log_File(idx,message);
 }
 
@@ -82,7 +82,7 @@ void Server::Recieve(int idx) {
     if (read(clients[idx].cli_sockfd, clients[idx].clientData, filesize) < 0) {
         perror("Error reading from socket");
     }
-    char * message = "Received Message From Client";
+    const char * message = "Received Message From Client";
     Write_Text_To_Log_File(idx,message);
 }
 
@@ -91,7 +91,7 @@ void Server::Return(int idx) {
     if (write(clients[idx].cli_sockfd, clients[idx].clientResponse, sizeof(clients[idx].clientResponse)-1) < 0) {
         perror("Error writing to socket");
     }
-    char * message = "Responded to Client";
+    const char * message = "Responded to Client";
     Write_Text_To_Log_File(idx,message);
 }
 
@@ -121,14 +121,14 @@ void Server::Handle_Client(int idx) {
     close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
 }
-void Server::Write_Text_To_Log_File(int idx, char* message)
+void Server::Write_Text_To_Log_File(int idx, const char* message)
 {
 
     FILE * pFile;
     pFile = fopen ("log.txt","a");
     time_t now = std::time(0);
     struct tm *timeinfo = localtime(&now);
-    fprintf(pFile,"%d-%d-%d %d:%d:%d %d.%d.%d.%d %s",timeinfo->tm_year+1900,timeinfo->tm_mon+1,timeinfo->tm_mday,timeinfo->tm_hour,
+    fprintf(pFile,"%d-%d-%d %d:%d:%d %d.%d.%d.%d %s\n",timeinfo->tm_year+1900,timeinfo->tm_mon+1,timeinfo->tm_mday,timeinfo->tm_hour,
     timeinfo->tm_min,timeinfo->tm_sec, int(clients[idx].cli_addr.sin_addr.s_addr&0xFF),(int(clients[idx].cli_addr.sin_addr.s_addr&0xFF00)>>8),
   (int(clients[idx].cli_addr.sin_addr.s_addr&0xFF0000)>>16),(int(clients[idx].cli_addr.sin_addr.s_addr&0xFF000000)>>24), message);
     fclose(pFile);
