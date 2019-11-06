@@ -15,3 +15,5 @@ Current Status by Rubric Task:
 7. Time outs supported by setsockopt().
 8. Infrustructure in place for maximum users, but due to issues we had with waitpid's non-blocking option, we do not reject clients automatically if there are too many concurrent users. See main function in server.
 Thanks!
+
+Statement of authorship - authorship.jpeg
