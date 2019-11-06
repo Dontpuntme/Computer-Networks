@@ -1,4 +1,13 @@
-2019-11-5 18:7:3 Server booted up :D
-2019-11-5 18:7:4 127.0.0.1 Client Accepted
-2019-11-5 18:7:5 127.0.0.1 Received Message From Client
-2019-11-5 18:7:6 127.0.0.1 Responded to Client
+2019-11-5 19:59:2 Server booted up :D
+2019-11-5 19:59:9 127.0.0.1 Client Accepted
+2019-11-5 19:59:9 127.0.0.1 Received Message From Client
+2019-11-5 19:59:10 127.0.0.1 Responded to Client
+2019-11-5 19:59:11 127.0.0.1 Client Accepted
+2019-11-5 19:59:11 127.0.0.1 Received Message From Client
+2019-11-5 19:59:11 127.0.0.1 Responded to Client
+2019-11-5 19:59:12 127.0.0.1 Client Accepted
+2019-11-5 19:59:12 127.0.0.1 Received Message From Client
+2019-11-5 19:59:13 127.0.0.1 Responded to Client
+2019-11-5 19:59:14 127.0.0.1 Client Accepted
+2019-11-5 19:59:14 127.0.0.1 Received Message From Client
+2019-11-5 19:59:14 127.0.0.1 Responded to Client

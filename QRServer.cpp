@@ -90,6 +90,45 @@ void Server::Accept(int idx) {
         perror("Error accepting socket");
         exit(1);
     }
+    
+    /* handles rate limiting */
+    // int i = 0;
+    // int recentEntries = 0;
+    // int tts=0;//total time seconds
+    // int ttsCur=0;//total time seconds current
+    // time_t now = std::time(0);
+    // struct tm *curTime = (struct tm *)malloc(sizeof(struct tm));
+    // curTime = localtime(&now);
+    // ttsCur = ((curTime->tm_hour*3600)+(curTime->tm_min*60)+(curTime->tm_sec));
+    // struct entry curEntry;
+    // curEntry.addr=curr_addr;
+    // curEntry.time=*curTime;
+    // while(i < entries.size()) {        
+    //     if(entries.at(i).addr.sin_addr.s_addr == curr_addr.sin_addr.s_addr) {
+    //         tts = ((entries.at(i).time.tm_hour * 3600)+(entries.at(i).time.tm_min*60)+(entries.at(i).time.tm_sec));
+    //         if (ttsCur-tts<rs) {
+    //             recentEntries++;
+    //         }
+    //         else {
+    //             entries.erase (entries.begin()+i);
+    //         }        
+    //     }
+    //     if (recentEntries >= rr) { /* deny connection */
+    //         uint32_t retcode = 3;
+    //         const char* failMessage = "Rate limit surpassed";
+    //         uint32_t msgLength = strlen(failMessage) + 1;
+    //         clients[idx].cli_addr = curr_addr; /* record client ip address */
+    //         write(clients[idx].cli_sockfd, &retcode, 4); /* return code */
+    //         write(clients[idx].cli_sockfd, &msgLength, 4); /* return code */
+    //         write(clients[idx].cli_sockfd, &failMessage, msgLength); /* return code */
+    //         const char* message = "Client went over rate message";
+    //         Write_Text_To_Log_File(idx,message);
+    //         //close(clients[idx].cli_sockfd);
+    //         return;
+    //     }
+    //     i++;
+    // }
+    // entries.push_back(curEntry);
     printf("Server socket accept success\n");
     clients[idx].cli_addr = curr_addr; /* record client ip address */
     const char* message = "Client Accepted";
@@ -163,7 +202,6 @@ void Server::Reject() {
 
 /* Helper which handles client interaction from accept to return */
 void Server::Handle_Client(int idx) {
-    sleep(1); /* for testing concurrency */
     char idxchar = (char) (idx + 48);
     char* filename = (char*)malloc(sizeof(char)*12);
     asprintf(&filename, "QR%c.png", idxchar);
@@ -171,7 +209,7 @@ void Server::Handle_Client(int idx) {
     Server::ProcessQRCode(filename, idx);
     Server::Return(idx);
     free(filename);
-    close(clients[idx].cli_sockfd);
+    //close(clients[idx].cli_sockfd);
     printf("Finished handling client index %d\n", idx);
 }
 void Server::Write_Text_To_Log_File(int idx, const char* message) {
@@ -250,7 +288,7 @@ void Server::ProcessQRCode(char* filename, int idx) {
         Write_Text_To_Log_File(idx,message);
     }
     printf("Done processing QR code\n");
-    free(clients[idx].clientData); /* cleanup memory */
+    //free(clients[idx].clientData); /* cleanup memory */
     remove(filename);
 }
 
@@ -277,7 +315,6 @@ Server::~Server() {
     close(sockfd);
 }
 
-
 int main(int argc, char** argv) {
     /* TODO parse arguments in form ./QRServer --PORT=2050 ... with getopt() */
     int port, rateRequests, rateSeconds, maxUsers, timeOut;
@@ -300,13 +337,10 @@ int main(int argc, char** argv) {
 
     };
 
-    while(true)
-    {
+    while(true) {
         const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
-        if(-1 == opt)
-        break;
-         switch (opt)
-        {
+        if(-1 == opt) break;
+        switch (opt) {
         case 'p':
             port = std::stoi(optarg);
             std::cout << "Port set to: " << port << std::endl;
@@ -364,7 +398,6 @@ int main(int argc, char** argv) {
             }
             else { /* parent */
                 pids[index] = pid;
-                //goes back to top of loop to deal with next client
             }
         }
         else {

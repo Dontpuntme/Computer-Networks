@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <vector>
 #include <netinet/in.h>
 
 /* global thread-related fields */
@@ -31,6 +32,12 @@ struct clientInfo {
     char clientResponse[1024];
 };
 
+/* struct for storing timestamps/ip for rate limiting */
+struct entry {
+    struct tm time;
+    struct sockaddr_in addr;
+};
+
 class Server {
 protected:
     /* input arg attributes */
@@ -38,6 +45,9 @@ protected:
     int rs;
     int users;
     int time;
+
+    /* for timestamps */
+    std::vector<entry> entries;
 
     /* socket-related attributes */
     int sockfd;
