@@ -1,15 +1,9 @@
 #include "wireview.h"
-#include "pcap.h"
-#include <net/ethernet.h>
-#include <netinet/ip.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 
-void packetHandler(char *userData, const struct pcap_pkthdr* pkthdr, const char* packet)
-{
+void packetHandler(char *userData, const struct pcap_pkthdr* pkthdr, const char* packet) {
 
 };
+
 int main(int argc, char** argv) {
 
 		char *dev, errbuf[PCAP_ERRBUF_SIZE];
