@@ -1,10 +1,8 @@
 #include "wireview.h"
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
-
-};
-
-
+    printf("Hello packet\n");
+}
 
 int main(int argc, char** argv) {
 	char *dev;
@@ -12,7 +10,7 @@ int main(int argc, char** argv) {
     char* filename;
     pcap_t* desc;
      
-    if (argc < 1) {
+    if (argc < 2) {
         printf("No file provided, exiting\n");
         return 1;
     }
@@ -28,7 +26,6 @@ int main(int argc, char** argv) {
 
     // file session created by pcap_open int for number of packets processed a negative number
     //meants process packets until another conditions comes up packetHandler is run on each packet
-    //idk for the last part
     pcap_loop(desc,-1,packetHandler,NULL);
     pcap_close(desc);
 }
