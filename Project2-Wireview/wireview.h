@@ -13,8 +13,11 @@
 
 struct packetInfo {
     int totalPackets;
-    // keep track of unique src IPs
-    // keep track of unique dst IPs
+    // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
+    // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
+    // ^ same for ethernet
+    // keep track of unique UDP src and dst ports
+    // keep track of avg/min/max packet sizes
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */

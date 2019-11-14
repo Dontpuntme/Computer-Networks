@@ -29,6 +29,8 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
 
     /* TODO determine if carrying UDP, if so print related ports */
 
+    /* TODO find start time of packet capture as well as duration */
+
     packetInfo.totalPackets++;
 }
 
