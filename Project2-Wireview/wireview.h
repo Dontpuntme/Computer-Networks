@@ -17,6 +17,8 @@ struct packetInfo {
     int totalPackets;
     std::set<int> udp_src_set;
     std::set<int> udp_dst_set;
+    std::set<std::string> eth_src_set;
+    std::set<std::string> eth_dst_set;
     // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
     // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
     // ^ same for ethernet

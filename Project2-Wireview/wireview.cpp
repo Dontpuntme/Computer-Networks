@@ -1,7 +1,7 @@
 #include "wireview.h"
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
-    printf("Packet info:\n");
+    printf("Packet info:\n"); 
 
     int size_ip = 0;
     struct ip* ip;
@@ -11,8 +11,12 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     char ether_src[ETH_ADDR_LEN];
     char ether_dst[ETH_ADDR_LEN];
     ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
+    printf("Ethernet SRC: %s\t", ether_src);
+    packetInfo.eth_src_set.insert(ether_src);
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
-    printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix only returning destination*/
+    printf("Ethernet DST: %s\n", ether_dst);
+    packetInfo.eth_dst_set.insert(ether_dst);
+    //printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix only returning destination*/
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
         /* if ARP, we just have to return ethernet addresses (no IP/UDP) */
@@ -79,11 +83,21 @@ int main(int argc, char** argv) {
     pcap_loop(desc,-1,packetHandler,NULL);
     pcap_close(desc);
 
+    /* print general packet stats */
     printf("Total packets: %d\n", packetInfo.totalPackets);
 
+    /* print ethernet stats */
+    printf("Ethernet src IPs:\n");
+    for (auto it = packetInfo.eth_src_set.begin(); it != packetInfo.eth_src_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
+    printf("\nEthernet dst IPs:\n");
+    for (auto it = packetInfo.eth_dst_set.begin(); it != packetInfo.eth_dst_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
 
     /* print out unique UDP src/dst ports */
-    printf("UDP src ports:\n");
+    printf("\nUDP src ports:\n");
     for (auto it = packetInfo.udp_src_set.begin(); it != packetInfo.udp_src_set.end(); it++) {
         printf("%d\t", *it);
     }
