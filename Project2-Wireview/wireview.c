@@ -1,20 +1,8 @@
 #include "wireview.h"
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
-    /* getting src/dst IP addresses */
-    struct ip* ip =(struct ip*)(packet + ETH_HEAD_LEN); 
-    char ip_src[INET_ADDRSTRLEN];
-    char ip_dst[INET_ADDRSTRLEN];
-    uint32_t size_ip = (uint32_t)(ip->ip_hl * 4);
-    if (size_ip < 20 || size_ip > 24) {
-        perror("Invalid IP size");
-        exit(1);
-    }
-    else {
-        inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
-        inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
-    }
-    printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst); /* TODO figure out where/how we want to store this */
+    uint32_t size_ip = 0;
+    struct ip* ip;
 
     /* TODO find ethernet header related info */
     // check ether_ntoa and cast to ether_addr
@@ -25,12 +13,41 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
     printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix */
 
-    /* TODO determine ARP/IP, find related fields for ARP */
+    if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
+        /* TODO determine ARP/IP, find related fields for ARP */
+        printf("ARP packet\n");
+    }
+    else if (ntohs(ether->ether_type) == ETHERTYPE_IP) { /* check if IP */
+        /* getting src/dst IP addresses */
+        ip =(struct ip*)(packet + ETH_HEAD_LEN); 
+        if (ip->ip_v != 4) {
+            printf("IPv6 detected, dont care\n");
+        }
+        else {
+            printf("IPv4 detected\n");
+            // UDP --> ip_p == 17
+            char ip_src[INET_ADDRSTRLEN];
+            char ip_dst[INET_ADDRSTRLEN];
+            size_ip = (uint32_t)(ip->ip_hl * 4);
+            if (size_ip < 20 || size_ip > 24) {
+                perror("Invalid IP size");
+                exit(1);
+            }
+            else {
+                inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
+                inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
+            }
+            printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst); /* TODO figure out where/how we want to store this */
+        }
+    }
 
     /* TODO determine if carrying UDP, if so print related ports */
+    if (ip->ip_p == 17) {
+        struct udphdr* udphdr = (struct udphr *)(packet + ETH_HEAD_LEN + size_ip);
+        printf("UDP src port: %d\tUDP dst port: %d\n", udphdr->uh_sport, udphdr->uh_dport); // TODO fix
+    }
 
     /* TODO find start time of packet capture as well as duration */
-
     packetInfo.totalPackets++;
 }
 
