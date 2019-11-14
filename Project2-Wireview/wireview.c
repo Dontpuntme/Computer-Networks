@@ -18,10 +18,12 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
 
     /* TODO find ethernet header related info */
     // check ether_ntoa and cast to ether_addr
-    const struct ether_addr* ether = (struct ether_addr *)(packet);
-    char ether_addr[ETH_ADDR_LEN];
-    ether_ntoa_r(ether, ether_addr);
-    printf("Ethernet address: %s\n", ether_addr);
+    const struct ether_header* ether = (struct ether_header *)(packet);
+    char ether_src[ETH_ADDR_LEN];
+    char ether_dst[ETH_ADDR_LEN];
+    ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
+    ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
+    printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix */
 
     /* TODO determine ARP/IP, find related fields for ARP */
 
