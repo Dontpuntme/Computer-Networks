@@ -7,16 +7,16 @@
 #include <netinet/udp.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
-#include <vector>
 #include <iterator>
+#include <set>
 
 #define ETH_ADDR_LEN 6
 #define ETH_HEAD_LEN 14
 
 struct packetInfo {
     int totalPackets;
-    std::vector<int> udp_srcs;
-    std::vector<int> udp_dsts;
+    std::set<int> udp_src_set;
+    std::set<int> udp_dst_set;
     // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
     // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
     // ^ same for ethernet
@@ -26,5 +26,4 @@ struct packetInfo {
 
 struct packetInfo packetInfo; /* global struct for accumulating data */
 
-void addUnique(std::vector<int> v, int port); /* add value to packetinfo vector if port is unique */
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */

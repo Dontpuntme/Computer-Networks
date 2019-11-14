@@ -1,22 +1,8 @@
 #include "wireview.h"
 
-void addUnique(std::vector<int> v, int port) {
-    int inVector = 0; /* whether or not port is in vector */
-    for (int i : v) {
-        printf("i: %d\n", i);
-        if (i == port) {
-            printf("found port %d in vector", i);
-            inVector = 1;
-            return;
-        }
-    }
-    if (inVector == 0) { /*if not already present, add to vector */
-        printf("added port %d to vector\n", port);
-        (&v)->push_back(port);
-    }
-}
-
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
+    printf("Packet info:\n");
+
     int size_ip = 0;
     struct ip* ip;
 
@@ -57,14 +43,16 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     /* if UDP, get src/dst */
     if (ip->ip_p == 17) { // UDP --> ip_p == 17
         struct udphdr* udp = (struct udphdr *)(packet + ETH_HEAD_LEN + size_ip);
-        addUnique(packetInfo.udp_srcs, ntohs(udp->uh_sport));
-        addUnique(packetInfo.udp_dsts, ntohs(udp->uh_dport));
+        packetInfo.udp_src_set.insert(ntohs(udp->uh_sport));
+        packetInfo.udp_dst_set.insert(ntohs(udp->uh_dport));
+
         printf("UDP src port: %d\tUDP dst port: %d\n", ntohs(udp->uh_sport), ntohs(udp->uh_dport));
         // udp->uh_len for added offset to check payload (maybe)
     }
 
     /* TODO find start time of packet capture as well as duration */
     packetInfo.totalPackets++;
+    printf("\n");
 }
 
 int main(int argc, char** argv) {
@@ -92,12 +80,16 @@ int main(int argc, char** argv) {
     pcap_close(desc);
 
     printf("Total packets: %d\n", packetInfo.totalPackets);
+
+
+    /* print out unique UDP src/dst ports */
     printf("UDP src ports:\n");
-    for (int port : packetInfo.udp_srcs) {
-        printf("%d\n", port);
+    for (auto it = packetInfo.udp_src_set.begin(); it != packetInfo.udp_src_set.end(); it++) {
+        printf("%d\t", *it);
     }
-    printf("UDP dst ports:\n");
-    for (int port : packetInfo.udp_dsts) {
-        printf("%d\n", port);
+    printf("\nUDP dst ports:\n");
+    for (auto it = packetInfo.udp_dst_set.begin(); it != packetInfo.udp_dst_set.end(); it++) {
+        printf("%d\t", *it);
     }
+    printf("\n");
 }
