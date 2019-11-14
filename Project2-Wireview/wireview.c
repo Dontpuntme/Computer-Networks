@@ -14,8 +14,18 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
         inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
     }
-    printf("IP src:%s\t IP dst:%s\n", ip_src, ip_dst);
+    printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst); /* TODO figure out where/how we want to store this */
 
+    /* TODO find ethernet header related info */
+    // check ether_ntoa and cast to ether_addr
+    const struct ether_addr* ether = (struct ether_addr *)(packet);
+    char ether_addr[ETH_ADDR_LEN];
+    ether_ntoa_r(ether, ether_addr);
+    printf("Ethernet address: %s\n", ether_addr);
+
+    /* TODO determine ARP/IP, find related fields for ARP */
+
+    /* TODO determine if carrying UDP, if so print related ports */
 
     packetInfo.totalPackets++;
 }
