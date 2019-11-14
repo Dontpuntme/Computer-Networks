@@ -1,4 +1,4 @@
-SOURCES := wireview.c
+SOURCES := wireview.cpp
 HEADERS := wireview.h
 LINK := -lpcap
 OUTPUT := wireview
@@ -7,7 +7,7 @@ COMPILER := gcc
 all: $(OUTPUT)
 
 $(OUTPUT): $(SOURCES) $(HEADERS)
-	$(COMPILER) -o $(OUTPUT) $(SOURCES) $(LINK)
+	$(CXX) -o $(OUTPUT) $(SOURCES) $(LINK)
 
 clean:
 	$(RM) $(OUTPUT)
