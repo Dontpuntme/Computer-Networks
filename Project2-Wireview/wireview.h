@@ -19,6 +19,8 @@ struct packetInfo {
     std::set<int> udp_dst_set;
     std::set<std::string> eth_src_set;
     std::set<std::string> eth_dst_set;
+    std::set<std::string> ip_src_set;
+    std::set<std::string> ip_dst_set;
     // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
     // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
     // ^ same for ethernet
@@ -29,3 +31,4 @@ struct packetInfo {
 struct packetInfo packetInfo; /* global struct for accumulating data */
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */
+void printGlobalStats(); /* helper to print struct info */

@@ -19,7 +19,7 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     //printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix only returning destination*/
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
-        /* if ARP, we just have to return ethernet addresses (no IP/UDP) */
+        /* if ARP, we just have to return ethernet addresses (no IP/UDP) -- protocol fields? */
         printf("ARP packet\n");
     }
     else if (ntohs(ether->ether_type) == ETHERTYPE_IP) { /* check if IP */
@@ -40,6 +40,8 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
                 inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
                 inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
             }
+            packetInfo.ip_src_set.insert(ip_src);
+            packetInfo.ip_dst_set.insert(ip_dst);
             printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst); /* TODO figure out where/how we want to store this */
         }
     }
@@ -56,6 +58,42 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
 
     /* TODO find start time of packet capture as well as duration */
     packetInfo.totalPackets++;
+    printf("\n");
+}
+
+void printGlobalStats() {
+     /* print general packet stats */
+    printf("Total packets: %d\n", packetInfo.totalPackets);
+
+    /* print ethernet stats */
+    printf("Ethernet src addresses:\n");
+    for (auto it = packetInfo.eth_src_set.begin(); it != packetInfo.eth_src_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
+    printf("\nEthernet dst addresses:\n");
+    for (auto it = packetInfo.eth_dst_set.begin(); it != packetInfo.eth_dst_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
+
+    /* print ethernet stats */
+    printf("\nIPv4 srcs:\n");
+    for (auto it = packetInfo.ip_src_set.begin(); it != packetInfo.ip_src_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
+    printf("\nIPv4 dsts:\n");
+    for (auto it = packetInfo.ip_dst_set.begin(); it != packetInfo.ip_dst_set.end(); it++) {
+        printf("%s\t", (*it).c_str());
+    }
+
+    /* print out unique UDP src/dst ports */
+    printf("\nUDP src ports:\n");
+    for (auto it = packetInfo.udp_src_set.begin(); it != packetInfo.udp_src_set.end(); it++) {
+        printf("%d\t", *it);
+    }
+    printf("\nUDP dst ports:\n");
+    for (auto it = packetInfo.udp_dst_set.begin(); it != packetInfo.udp_dst_set.end(); it++) {
+        printf("%d\t", *it);
+    }
     printf("\n");
 }
 
@@ -83,27 +121,6 @@ int main(int argc, char** argv) {
     pcap_loop(desc,-1,packetHandler,NULL);
     pcap_close(desc);
 
-    /* print general packet stats */
-    printf("Total packets: %d\n", packetInfo.totalPackets);
-
-    /* print ethernet stats */
-    printf("Ethernet src IPs:\n");
-    for (auto it = packetInfo.eth_src_set.begin(); it != packetInfo.eth_src_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
-    }
-    printf("\nEthernet dst IPs:\n");
-    for (auto it = packetInfo.eth_dst_set.begin(); it != packetInfo.eth_dst_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
-    }
-
-    /* print out unique UDP src/dst ports */
-    printf("\nUDP src ports:\n");
-    for (auto it = packetInfo.udp_src_set.begin(); it != packetInfo.udp_src_set.end(); it++) {
-        printf("%d\t", *it);
-    }
-    printf("\nUDP dst ports:\n");
-    for (auto it = packetInfo.udp_dst_set.begin(); it != packetInfo.udp_dst_set.end(); it++) {
-        printf("%d\t", *it);
-    }
-    printf("\n");
+    /* after loop, print stats */
+    printGlobalStats();
 }
