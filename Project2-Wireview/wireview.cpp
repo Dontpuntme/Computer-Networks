@@ -2,7 +2,7 @@
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
     printf("Packet info:\n"); 
-
+    printf("Packet lengh: %d \n", pkthdr->len *8);
     int size_ip = 0;
     struct ip* ip;
 
