@@ -11,8 +11,8 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     last=pkthdr->ts;
 
     uint32_t packet_size = pkthdr->len *8;
-    printf("Packet info:\n"); 
-    printf("Packet lengh: %d \n", packet_size);
+    //printf("Packet info:\n"); 
+    //printf("Packet lengh: %d \n", packet_size);
     
     /* update records if first in capture or >max or <min, add to total packet size */
     if(packet_size > packetInfo.maxPacketSize || packetInfo.firstFlag) { 
@@ -23,7 +23,6 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     }
     packetInfo.avgPacketSize = packetInfo.avgPacketSize + packet_size; /* actual avg is taken right before we print stats */
 
-
     uint32_t size_ip = 0;
     struct ip* ip;
 
@@ -32,15 +31,15 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     char ether_src[ETH_ADDR_LEN];
     char ether_dst[ETH_ADDR_LEN];
     ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
-    printf("Ethernet SRC: %s\t", ether_src);
+    //printf("Ethernet SRC: %s\t", ether_src);
     packetInfo.eth_src_map[ether_src] = packetInfo.eth_src_map.count(ether_src)+1;
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
-    printf("Ethernet DST: %s\n", ether_dst);
+    //printf("Ethernet DST: %s\n", ether_dst);
     packetInfo.eth_dst_map[ether_dst] = packetInfo.eth_dst_map.count(ether_dst)+1;
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
         /* if ARP, we just have to return ethernet addresses (no IP/UDP) -- protocol fields? */
-        printf("ARP packet\n");
+        //printf("ARP packet\n");
     }
     else if (ntohs(ether->ether_type) == ETHERTYPE_IP) { /* check if IP */
         /* getting src/dst IP addresses */
@@ -63,7 +62,7 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
             packetInfo.ip_src_map[ip_src] = packetInfo.ip_src_map.count(ip_src)+1;
             packetInfo.ip_dst_map[ip_dst] = packetInfo.ip_dst_map.count(ip_dst)+1;
             //packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1)); old method
-            printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
+            //printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
         }
     }
     
@@ -72,9 +71,12 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         struct udphdr* udp = (struct udphdr *)(packet + ETH_HEAD_LEN + size_ip);
         packetInfo.udp_src_set.insert(ntohs(udp->uh_sport));
         packetInfo.udp_dst_set.insert(ntohs(udp->uh_dport));
-
-        printf("UDP src port: %d\tUDP dst port: %d\n", ntohs(udp->uh_sport), ntohs(udp->uh_dport));
-        // udp->uh_len for added offset to check payload (maybe)
+        packetInfo.countUDP++;
+        //printf("UDP src port: %d\tUDP dst port: %d\n", ntohs(udp->uh_sport), ntohs(udp->uh_dport));
+    }
+    /* check for TCP */
+    if (ip->ip_p == 6) {
+        packetInfo.countTCP++;
     }
 
     packetInfo.totalPackets++;
@@ -87,6 +89,9 @@ void initGlobalStats() {
     packetInfo.avgPacketSize = 0;
     packetInfo.maxPacketSize = 0;
     packetInfo.totalPackets = 0;
+    packetInfo.countARP = 0;
+    packetInfo.countTCP = 0;
+    packetInfo.countUDP = 0;
 }
 
 void printGlobalStats() {
@@ -98,7 +103,10 @@ void printGlobalStats() {
     printf("Total packets: %d\n", packetInfo.totalPackets);
     printf("Min packet size: %d\n", packetInfo.minPacketSize);
     printf("Max packet size: %d\n", packetInfo.maxPacketSize);
-    printf("Avg packet size: %d\n\n", packetInfo.avgPacketSize);
+    printf("Avg packet size: %d\n", packetInfo.avgPacketSize);
+    printf("Total ARP: %d\n", packetInfo.countARP);
+    printf("Total UDP: %d\n", packetInfo.countUDP);
+    printf("Total TCP: %d\n\n", packetInfo.countTCP);
 
     /* print ethernet stats */
     printf("Ethernet SRC addresses:\n");

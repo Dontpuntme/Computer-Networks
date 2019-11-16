@@ -21,6 +21,9 @@ struct packetInfo {
     uint32_t minPacketSize;
     uint32_t maxPacketSize;
     uint32_t avgPacketSize;
+    uint32_t countUDP;
+    uint32_t countARP;
+    uint32_t countTCP;
     std::set<int> udp_src_set; /* set of UDP src ports */
     std::set<int> udp_dst_set; /* set of UDP dst ports */
     std::map<std::string, uint32_t> eth_src_map; /* map of addresses and their frequencies */
