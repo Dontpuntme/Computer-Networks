@@ -1,6 +1,15 @@
 #include "wireview.h"
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
+    if(firstFlag){
+        struct timeval tv;
+        first = pkthdr->ts;
+        nowtm = localtime(&pkthdr->ts.tv_sec);
+        printf("Date: %d-%d-%d Time: %d:%d:%d\n",nowtm->tm_year+1900,nowtm->tm_mon+1,nowtm->tm_mday,nowtm->tm_hour,
+        nowtm->tm_min,nowtm->tm_sec);
+        firstFlag = false;
+    }
+    last=pkthdr->ts;
     printf("Packet info:\n"); 
     printf("Packet lengh: %d \n", pkthdr->len *8);
     int size_ip = 0;
