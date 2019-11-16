@@ -93,19 +93,20 @@ void printGlobalStats() {
     packetInfo.avgPacketSize = packetInfo.avgPacketSize / packetInfo.totalPackets;
 
     /* print general packet stats */
+    printf("General Packet Stats:\n");
     printf("Total packets: %d\n", packetInfo.totalPackets);
     printf("Min packet size: %d\n", packetInfo.minPacketSize);
     printf("Max packet size: %d\n", packetInfo.maxPacketSize);
-    printf("Avg packet size: %d\n", packetInfo.avgPacketSize);
+    printf("Avg packet size: %d\n\n", packetInfo.avgPacketSize);
 
     /* print ethernet stats */
-    printf("Ethernet src addresses:\n");
+    printf("Ethernet SRC addresses:\n");
     for (auto it = packetInfo.eth_src_map.begin(); it != packetInfo.eth_src_map.end(); it++) {
         printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
-    printf("\nEthernet dst addresses:\n");
+    printf("\nEthernet DST addresses\n");
     for (auto it = packetInfo.eth_dst_map.begin(); it != packetInfo.eth_dst_map.end(); it++) {
-        printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
+        printf("%s\t\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
 
     /* print ethernet stats */

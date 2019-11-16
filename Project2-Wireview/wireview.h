@@ -21,14 +21,12 @@ struct packetInfo {
     uint32_t minPacketSize;
     uint32_t maxPacketSize;
     uint32_t avgPacketSize;
-    std::set<int> udp_src_set;
-    std::set<int> udp_dst_set;
-    std::map<std::string, uint32_t> eth_src_map;
-    std::map<std::string, uint32_t> eth_dst_map;
-    std::map<std::string, uint32_t> ip_src_map;
-    std::map<std::string, uint32_t> ip_dst_map;
-    // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
-    // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
+    std::set<int> udp_src_set; /* set of UDP src ports */
+    std::set<int> udp_dst_set; /* set of UDP dst ports */
+    std::map<std::string, uint32_t> eth_src_map; /* map of addresses and their frequencies */
+    std::map<std::string, uint32_t> eth_dst_map; /* map of addresses and their frequencies */
+    std::map<std::string, uint32_t> ip_src_map; /* map of addresses and their frequencies */
+    std::map<std::string, uint32_t> ip_dst_map; /* map of addresses and their frequencies */
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */

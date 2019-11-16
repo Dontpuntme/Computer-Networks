@@ -2,7 +2,7 @@
 
 Wireview Program
 
-Usage: `./wireview`
+Usage: `./wireview <filename.pcap>`
 
 
 Sources: 
