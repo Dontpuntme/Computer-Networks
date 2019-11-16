@@ -33,10 +33,10 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     char ether_dst[ETH_ADDR_LEN];
     ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
     printf("Ethernet SRC: %s\t", ether_src);
-    packetInfo.eth_src_map.insert(std::pair<std::string, uint32_t>(ether_src, packetInfo.eth_src_map.count(ether_src)+1)); /* TODO fix map count */
+    packetInfo.eth_src_map[ether_src] = packetInfo.eth_src_map.count(ether_src)+1;
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
     printf("Ethernet DST: %s\n", ether_dst);
-    packetInfo.eth_dst_map.insert(std::pair<std::string, uint32_t>(ether_dst, packetInfo.eth_dst_map.count(ether_dst)+1));
+    packetInfo.eth_dst_map[ether_dst] = packetInfo.eth_dst_map.count(ether_dst)+1;
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
         /* if ARP, we just have to return ethernet addresses (no IP/UDP) -- protocol fields? */
@@ -60,8 +60,9 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
                 inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
                 inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
             }
-            packetInfo.ip_src_map.insert(std::pair<std::string, uint32_t>(ip_src, packetInfo.ip_src_map.count(ip_src)+1));
-            packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1));
+            packetInfo.ip_src_map[ip_src] = packetInfo.ip_src_map.count(ip_src)+1;
+            packetInfo.ip_dst_map[ip_dst] = packetInfo.ip_dst_map.count(ip_dst)+1;
+            //packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1)); old method
             printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
         }
     }
