@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <iterator>
 #include <set>
+#include <time.h>
 
 #define ETH_ADDR_LEN 6
 #define ETH_HEAD_LEN 14
@@ -29,6 +30,9 @@ struct packetInfo {
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */
-
+bool firstFlag = true;
+struct timeval first;
+struct timeval last;
+struct tm *nowtm;
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */
 void printGlobalStats(); /* helper to print struct info */
