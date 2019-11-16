@@ -1,18 +1,30 @@
 #include "wireview.h"
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet) {
-    if(firstFlag){
+    if(packetInfo.firstFlag){
         struct timeval tv;
         first = pkthdr->ts;
         nowtm = localtime(&pkthdr->ts.tv_sec);
         printf("Date: %d-%d-%d Time: %d:%d:%d\n",nowtm->tm_year+1900,nowtm->tm_mon+1,nowtm->tm_mday,nowtm->tm_hour,
         nowtm->tm_min,nowtm->tm_sec);
-        firstFlag = false;
     }
     last=pkthdr->ts;
+
+    uint32_t packet_size = pkthdr->len *8;
     printf("Packet info:\n"); 
-    printf("Packet lengh: %d \n", pkthdr->len *8);
-    int size_ip = 0;
+    printf("Packet lengh: %d \n", packet_size);
+    
+    /* update records if first in capture or >max or <min, add to total packet size */
+    if(packet_size > packetInfo.maxPacketSize || packetInfo.firstFlag) { 
+        packetInfo.maxPacketSize = packet_size; 
+    }
+    if(packet_size < packetInfo.minPacketSize || packetInfo.firstFlag) { 
+        packetInfo.minPacketSize = packet_size; 
+    }
+    packetInfo.avgPacketSize = packetInfo.avgPacketSize + packet_size; /* actual avg is taken right before we print stats */
+
+
+    uint32_t size_ip = 0;
     struct ip* ip;
 
     /* find ethernet header info */
@@ -21,11 +33,10 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     char ether_dst[ETH_ADDR_LEN];
     ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
     printf("Ethernet SRC: %s\t", ether_src);
-    packetInfo.eth_src_set.insert(ether_src);
+    packetInfo.eth_src_map.insert(std::pair<std::string, uint32_t>(ether_src, packetInfo.eth_src_map.count(ether_src)+1)); /* TODO fix map count */
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
     printf("Ethernet DST: %s\n", ether_dst);
-    packetInfo.eth_dst_set.insert(ether_dst);
-    //printf("Ethernet src: %s\t Ethernet dst: %s\n", ether_src, ether_dst); /* TODO fix only returning destination*/
+    packetInfo.eth_dst_map.insert(std::pair<std::string, uint32_t>(ether_dst, packetInfo.eth_dst_map.count(ether_dst)+1));
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
         /* if ARP, we just have to return ethernet addresses (no IP/UDP) -- protocol fields? */
@@ -49,9 +60,9 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
                 inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
                 inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
             }
-            packetInfo.ip_src_set.insert(ip_src);
-            packetInfo.ip_dst_set.insert(ip_dst);
-            printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst); /* TODO figure out where/how we want to store this */
+            packetInfo.ip_src_map.insert(std::pair<std::string, uint32_t>(ip_src, packetInfo.ip_src_map.count(ip_src)+1));
+            packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1));
+            printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
         }
     }
     
@@ -65,33 +76,46 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         // udp->uh_len for added offset to check payload (maybe)
     }
 
-    /* TODO find start time of packet capture as well as duration */
     packetInfo.totalPackets++;
+    packetInfo.firstFlag = false;
     printf("\n");
 }
 
+void initGlobalStats() {
+    packetInfo.minPacketSize = 0;
+    packetInfo.avgPacketSize = 0;
+    packetInfo.maxPacketSize = 0;
+    packetInfo.totalPackets = 0;
+}
+
 void printGlobalStats() {
-     /* print general packet stats */
+    /* first compute average packet size */
+    packetInfo.avgPacketSize = packetInfo.avgPacketSize / packetInfo.totalPackets;
+
+    /* print general packet stats */
     printf("Total packets: %d\n", packetInfo.totalPackets);
+    printf("Min packet size: %d\n", packetInfo.minPacketSize);
+    printf("Max packet size: %d\n", packetInfo.maxPacketSize);
+    printf("Avg packet size: %d\n", packetInfo.avgPacketSize);
 
     /* print ethernet stats */
     printf("Ethernet src addresses:\n");
-    for (auto it = packetInfo.eth_src_set.begin(); it != packetInfo.eth_src_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
+    for (auto it = packetInfo.eth_src_map.begin(); it != packetInfo.eth_src_map.end(); it++) {
+        printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
     printf("\nEthernet dst addresses:\n");
-    for (auto it = packetInfo.eth_dst_set.begin(); it != packetInfo.eth_dst_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
+    for (auto it = packetInfo.eth_dst_map.begin(); it != packetInfo.eth_dst_map.end(); it++) {
+        printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
 
     /* print ethernet stats */
     printf("\nIPv4 srcs:\n");
-    for (auto it = packetInfo.ip_src_set.begin(); it != packetInfo.ip_src_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
+    for (auto it = packetInfo.ip_src_map.begin(); it != packetInfo.ip_src_map.end(); it++) {
+        printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
     printf("\nIPv4 dsts:\n");
-    for (auto it = packetInfo.ip_dst_set.begin(); it != packetInfo.ip_dst_set.end(); it++) {
-        printf("%s\t", (*it).c_str());
+    for (auto it = packetInfo.ip_dst_map.begin(); it != packetInfo.ip_dst_map.end(); it++) {
+        printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
     }
 
     /* print out unique UDP src/dst ports */
@@ -118,6 +142,9 @@ int main(int argc, char** argv) {
     else {
         filename = argv[1];
     }
+
+    /* initialize relevant fields of global struct */
+    initGlobalStats();
     
     // opens pcap for given file name errbuff is just used and filled if there is an error
 	if ((desc = pcap_open_offline(filename,errbuf)) == NULL) {

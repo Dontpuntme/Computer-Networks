@@ -9,30 +9,34 @@
 #include <arpa/inet.h>
 #include <iterator>
 #include <set>
+#include <map>
 #include <time.h>
 
 #define ETH_ADDR_LEN 6
 #define ETH_HEAD_LEN 14
 
 struct packetInfo {
-    int totalPackets;
+    bool firstFlag = true; /* whether or not it is the firstpacket in the capture */
+    uint32_t totalPackets;
+    uint32_t minPacketSize;
+    uint32_t maxPacketSize;
+    uint32_t avgPacketSize;
     std::set<int> udp_src_set;
     std::set<int> udp_dst_set;
-    std::set<std::string> eth_src_set;
-    std::set<std::string> eth_dst_set;
-    std::set<std::string> ip_src_set;
-    std::set<std::string> ip_dst_set;
+    std::map<std::string, uint32_t> eth_src_map;
+    std::map<std::string, uint32_t> eth_dst_map;
+    std::map<std::string, uint32_t> ip_src_map;
+    std::map<std::string, uint32_t> ip_dst_map;
     // keep track of unique src IPs -- as well as the number of packets for each (vector + integer fields)
     // keep track of unique dst IPs -- as well as the number of packets for each (vector + integer fields)
-    // ^ same for ethernet
-    // keep track of unique UDP src and dst ports
-    // keep track of avg/min/max packet sizes
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */
-bool firstFlag = true;
 struct timeval first;
 struct timeval last;
 struct tm *nowtm;
+
+
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */
 void printGlobalStats(); /* helper to print struct info */
+void initGlobalStats(); /* not sure if necessary, why not tho lol */
