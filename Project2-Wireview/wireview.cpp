@@ -9,7 +9,6 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         nowtm->tm_min,nowtm->tm_sec);
     }
     last=pkthdr->ts;
-
     uint32_t packet_size = pkthdr->len *8;
     //printf("Packet info:\n"); 
     //printf("Packet lengh: %d \n", packet_size);
@@ -93,12 +92,26 @@ void initGlobalStats() {
     packetInfo.countTCP = 0;
     packetInfo.countUDP = 0;
 }
-
+double time_2_dbl(struct timeval time_value){
+double new_time = 0;
+new_time = (double)(time_value.tv_usec);
+new_time/=1000000;
+new_time+=(double)time_value.tv_sec;
+return new_time;
+}
 void printGlobalStats() {
     /* first compute average packet size */
     packetInfo.avgPacketSize = packetInfo.avgPacketSize / packetInfo.totalPackets;
 
     /* print general packet stats */
+    __time_t newfirst = first.tv_sec*1000000+first.tv_usec;
+    __time_t newlast = last.tv_sec*1000000+last.tv_usec;
+    struct timeval timedifference;
+    double timeDouble;
+    timedifference.tv_sec = (newlast-newfirst)/1000000;
+    timedifference.tv_usec = (newlast-newfirst)%1000000;
+    timeDouble = time_2_dbl(timedifference);
+    printf( "Duration: %f \n", timeDouble);
     printf("General Packet Stats:\n");
     printf("Total packets: %d\n", packetInfo.totalPackets);
     printf("Min packet size: %d\n", packetInfo.minPacketSize);
@@ -164,9 +177,9 @@ int main(int argc, char** argv) {
 
     // file session created by pcap_open int for number of packets processed a negative number
     //meants process packets until another conditions comes up packetHandler is run on each packet
+    
     pcap_loop(desc,-1,packetHandler,NULL);
     pcap_close(desc);
-
     /* after loop, print stats */
     printGlobalStats();
 }

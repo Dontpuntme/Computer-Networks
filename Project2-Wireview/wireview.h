@@ -41,3 +41,4 @@ struct tm *nowtm;
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */
 void printGlobalStats(); /* helper to print struct info */
 void initGlobalStats(); /* not sure if necessary, why not tho lol */
+double time_2_dbl(struct timeval time_value);
