@@ -33,9 +33,10 @@ struct packetInfo {
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */
+
 struct timeval first;
 struct timeval last;
-struct tm *nowtm;
+struct tm *start;
 
 
 void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, const unsigned char* packet); /* on-loop packet paser */

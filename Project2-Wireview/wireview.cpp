@@ -4,9 +4,9 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     if(packetInfo.firstFlag){
         struct timeval tv;
         first = pkthdr->ts;
-        nowtm = localtime(&pkthdr->ts.tv_sec);
-        printf("Date: %d-%d-%d Time: %d:%d:%d\n",nowtm->tm_year+1900,nowtm->tm_mon+1,nowtm->tm_mday,nowtm->tm_hour,
-        nowtm->tm_min,nowtm->tm_sec);
+        start= localtime(&pkthdr->ts.tv_sec);
+        //printf("Date: %d-%d-%d Time: %d:%d:%d\n",start->tm_year+1900,start->tm_mon+1,start->tm_mday,start->tm_hour,
+        //start->tm_min,start->tm_sec);
     }
     last=pkthdr->ts;
     uint32_t packet_size = pkthdr->len *8;
@@ -80,7 +80,6 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
 
     packetInfo.totalPackets++;
     packetInfo.firstFlag = false;
-    printf("\n");
 }
 
 void initGlobalStats() {
@@ -92,13 +91,15 @@ void initGlobalStats() {
     packetInfo.countTCP = 0;
     packetInfo.countUDP = 0;
 }
-double time_2_dbl(struct timeval time_value){
-double new_time = 0;
-new_time = (double)(time_value.tv_usec);
-new_time/=1000000;
-new_time+=(double)time_value.tv_sec;
-return new_time;
+
+double time_2_dbl(struct timeval time_value) {
+    double new_time = 0;
+    new_time = (double)(time_value.tv_usec);
+    new_time/=1000000;
+    new_time+=(double)time_value.tv_sec;
+    return new_time;
 }
+
 void printGlobalStats() {
     /* first compute average packet size */
     packetInfo.avgPacketSize = packetInfo.avgPacketSize / packetInfo.totalPackets;
@@ -111,7 +112,10 @@ void printGlobalStats() {
     timedifference.tv_sec = (newlast-newfirst)/1000000;
     timedifference.tv_usec = (newlast-newfirst)%1000000;
     timeDouble = time_2_dbl(timedifference);
-    printf( "Duration: %f \n", timeDouble);
+    printf("Time Stats:\n");
+    printf("Date: %d-%d-%d Time: %d:%d:%d\n",start->tm_year+1900,start->tm_mon+1,start->tm_mday,start->tm_hour,
+        start->tm_min,start->tm_sec);
+    printf("Duration: %f seconds\n", timeDouble);
     printf("General Packet Stats:\n");
     printf("Total packets: %d\n", packetInfo.totalPackets);
     printf("Min packet size: %d\n", packetInfo.minPacketSize);
