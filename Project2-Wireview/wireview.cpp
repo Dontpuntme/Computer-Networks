@@ -91,6 +91,10 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         /* check for TCP */
         if (ip->ip_p == 6) {
             packetInfo.countTCP++;
+            struct tcphdr* tcp = (struct tcphdr *)(packet + ETH_HEAD_LEN + size_ip);
+            packetInfo.tcpInfo.isTCP = true;
+            packetInfo.tcpInfo.tcp_src_set.insert(ntohs(tcp->th_sport));
+            packetInfo.tcpInfo.tcp_dst_set.insert(ntohs(tcp->th_dport));
         }
     }
 
@@ -195,6 +199,19 @@ void printGlobalStats() {
             printf("%d\t", *it);
         }
     }
+
+    /* print out unique TCP src/dst ports */
+    if (packetInfo.tcpInfo.isTCP) {
+        printf("\nTCP src ports:\n");
+        for (auto it = packetInfo.tcpInfo.tcp_src_set.begin(); it != packetInfo.tcpInfo.tcp_src_set.end(); it++) {
+            printf("%d\t", *it);
+        }
+        printf("\nTCP dst ports:\n");
+        for (auto it = packetInfo.tcpInfo.tcp_dst_set.begin(); it != packetInfo.tcpInfo.tcp_dst_set.end(); it++) {
+            printf("%d\t", *it);
+        }
+    }
+
     printf("\n");
 
 }

@@ -5,6 +5,7 @@
 #include <net/ethernet.h>
 #include <netinet/ether.h>
 #include <netinet/udp.h>
+#include <netinet/tcp.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
@@ -32,6 +33,12 @@ struct udpInfo {
     std::set<int> udp_dst_set; /* set of UDP dst ports */
 };
 
+struct tcpInfo {
+    bool isTCP = false;
+    std::set<int> tcp_src_set; /* set of TCP src ports */
+    std::set<int> tcp_dst_set; /* set of TCP dst ports */
+};
+
 struct ipInfo {
     bool isIP4 = false;
     std::map<std::string, uint32_t> ip_src_map; /* map of addresses and their frequencies */
@@ -51,6 +58,7 @@ struct packetInfo {
     std::map<std::string, uint32_t> eth_dst_map; /* map of addresses and their frequencies */
     struct arpInfo arp; /* arp-specific information */
     struct udpInfo udpInfo; /* udp-specific information */
+    struct tcpInfo tcpInfo; /* tcp-specific information */
     struct ipInfo ipInfo; /* ipv4-specific information */
 };
 
