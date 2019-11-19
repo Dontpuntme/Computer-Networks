@@ -26,6 +26,18 @@ struct arpInfo {
     std::map<std::string, uint32_t> arp_ip_dst_map;
 };
 
+struct udpInfo {
+    bool isUDP = false;
+    std::set<int> udp_src_set; /* set of UDP src ports */
+    std::set<int> udp_dst_set; /* set of UDP dst ports */
+};
+
+struct ipInfo {
+    bool isIP4 = false;
+    std::map<std::string, uint32_t> ip_src_map; /* map of addresses and their frequencies */
+    std::map<std::string, uint32_t> ip_dst_map; /* map of addresses and their frequencies */
+};
+
 struct packetInfo {
     bool firstFlag = true; /* whether or not it is the firstpacket in the capture */
     uint32_t totalPackets;
@@ -35,13 +47,11 @@ struct packetInfo {
     uint32_t countUDP;
     uint32_t countARP;
     uint32_t countTCP;
-    std::set<int> udp_src_set; /* set of UDP src ports */
-    std::set<int> udp_dst_set; /* set of UDP dst ports */
     std::map<std::string, uint32_t> eth_src_map; /* map of addresses and their frequencies */
     std::map<std::string, uint32_t> eth_dst_map; /* map of addresses and their frequencies */
-    std::map<std::string, uint32_t> ip_src_map; /* map of addresses and their frequencies */
-    std::map<std::string, uint32_t> ip_dst_map; /* map of addresses and their frequencies */
     struct arpInfo arp; /* arp-specific information */
+    struct udpInfo udpInfo; /* udp-specific information */
+    struct ipInfo ipInfo; /* ipv4-specific information */
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */
