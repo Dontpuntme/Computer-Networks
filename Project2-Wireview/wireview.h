@@ -6,14 +6,25 @@
 #include <netinet/ether.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <iterator>
 #include <set>
 #include <map>
+#include <vector>
 #include <time.h>
 
 #define ETH_ADDR_LEN 6
 #define ETH_HEAD_LEN 14
+
+
+struct arpInfo {
+    bool isArp = false;
+    std::map<std::string, uint32_t> arp_mac_src_map;
+    std::map<std::string, uint32_t> arp_mac_dst_map;
+    std::map<std::string, uint32_t> arp_ip_src_map;
+    std::map<std::string, uint32_t> arp_ip_dst_map;
+};
 
 struct packetInfo {
     bool firstFlag = true; /* whether or not it is the firstpacket in the capture */
@@ -30,6 +41,7 @@ struct packetInfo {
     std::map<std::string, uint32_t> eth_dst_map; /* map of addresses and their frequencies */
     std::map<std::string, uint32_t> ip_src_map; /* map of addresses and their frequencies */
     std::map<std::string, uint32_t> ip_dst_map; /* map of addresses and their frequencies */
+    struct arpInfo arp; /* arp-specific information */
 };
 
 struct packetInfo packetInfo; /* global struct for accumulating data */

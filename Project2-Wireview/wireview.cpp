@@ -37,8 +37,15 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     packetInfo.eth_dst_map[ether_dst] = packetInfo.eth_dst_map.count(ether_dst)+1;
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
-        /* if ARP, we just have to return ethernet addresses (no IP/UDP) -- protocol fields? */
-        //printf("ARP packet\n");
+        /* if ARP, check for sender/reciever addresses and protocol formats */
+        packetInfo.arp.isArp = true; /* mark capture as containing ARP */
+        struct ether_arp* arpinfo = (struct ether_arp *)(packet+ETH_HEAD_LEN);
+        char* mac_src;
+        char* mac_dst;
+        asprintf(&mac_src, "%02X:%02X:%02X:%02X:%02X:%02X\n", arpinfo->arp_sha[0], arpinfo->arp_sha[1], arpinfo->arp_sha[2], arpinfo->arp_sha[3], arpinfo->arp_sha[4], arpinfo->arp_sha[5]);
+        asprintf(&mac_dst, "%02X:%02X:%02X:%02X:%02X:%02X\n", arpinfo->arp_tha[0], arpinfo->arp_tha[1], arpinfo->arp_tha[2], arpinfo->arp_tha[3], arpinfo->arp_tha[4], arpinfo->arp_tha[5]);
+        packetInfo.arp.arp_mac_src_map[mac_src] = packetInfo.arp.arp_mac_src_map.count(mac_src)+1;
+        packetInfo.arp.arp_mac_dst_map[mac_dst] = packetInfo.arp.arp_mac_dst_map.count(mac_dst)+1;
     }
     else if (ntohs(ether->ether_type) == ETHERTYPE_IP) { /* check if IP */
         /* getting src/dst IP addresses */
@@ -63,19 +70,19 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
             //packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1)); old method
             //printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
         }
-    }
-    
-    /* if UDP, get src/dst */
-    if (ip->ip_p == 17) { // UDP --> ip_p == 17
-        struct udphdr* udp = (struct udphdr *)(packet + ETH_HEAD_LEN + size_ip);
-        packetInfo.udp_src_set.insert(ntohs(udp->uh_sport));
-        packetInfo.udp_dst_set.insert(ntohs(udp->uh_dport));
-        packetInfo.countUDP++;
-        //printf("UDP src port: %d\tUDP dst port: %d\n", ntohs(udp->uh_sport), ntohs(udp->uh_dport));
-    }
-    /* check for TCP */
-    if (ip->ip_p == 6) {
-        packetInfo.countTCP++;
+        
+        /* if UDP, get src/dst */
+        if (ip->ip_p == 17) { // UDP --> ip_p == 17
+            struct udphdr* udp = (struct udphdr *)(packet + ETH_HEAD_LEN + size_ip);
+            packetInfo.udp_src_set.insert(ntohs(udp->uh_sport));
+            packetInfo.udp_dst_set.insert(ntohs(udp->uh_dport));
+            packetInfo.countUDP++;
+            //printf("UDP src port: %d\tUDP dst port: %d\n", ntohs(udp->uh_sport), ntohs(udp->uh_dport));
+        }
+        /* check for TCP */
+        if (ip->ip_p == 6) {
+            packetInfo.countTCP++;
+        }
     }
 
     packetInfo.totalPackets++;
@@ -112,9 +119,9 @@ void printGlobalStats() {
     timedifference.tv_sec = (newlast-newfirst)/1000000;
     timedifference.tv_usec = (newlast-newfirst)%1000000;
     timeDouble = time_2_dbl(timedifference);
-    printf("Time Stats:\n");
-    printf("Date: %d-%d-%d Time: %d:%d:%d\n",start->tm_year+1900,start->tm_mon+1,start->tm_mday,start->tm_hour,
-        start->tm_min,start->tm_sec);
+    // printf("Time Stats:\n");
+    // printf("Date: %d-%d-%d Time: %d:%d:%d\n",start->tm_year+1900,start->tm_mon+1,start->tm_mday,start->tm_hour,
+    //     start->tm_min,start->tm_sec);
     printf("Duration: %f seconds\n", timeDouble);
     printf("General Packet Stats:\n");
     printf("Total packets: %d\n", packetInfo.totalPackets);
@@ -143,6 +150,19 @@ void printGlobalStats() {
     printf("\nIPv4 dsts:\n");
     for (auto it = packetInfo.ip_dst_map.begin(); it != packetInfo.ip_dst_map.end(); it++) {
         printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
+    }
+
+    /* if ARP, print ARP mac addresses/IPs */
+    if (packetInfo.arp.isArp) {
+        printf("\nCapture contained ARP");
+        printf("\nMAC srcs:\n");
+        for (auto it = packetInfo.arp.arp_mac_src_map.begin(); it != packetInfo.arp.arp_mac_src_map.end(); it++) {
+            printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
+        }
+        printf("\nMAC dsts:\n");
+        for (auto it = packetInfo.arp.arp_mac_dst_map.begin(); it != packetInfo.arp.arp_mac_dst_map.end(); it++) {
+            printf("%s\tCount:%d\n", (*it).first.c_str(), (*it).second);
+        }
     }
 
     /* print out unique UDP src/dst ports */
