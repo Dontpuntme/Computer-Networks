@@ -9,7 +9,7 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         //start->tm_min,start->tm_sec);
     }
     last=pkthdr->ts;
-    uint32_t packet_size = pkthdr->len *8;
+    uint32_t packet_size = pkthdr->caplen;
     //printf("Packet info:\n"); 
     //printf("Packet lengh: %d \n", packet_size);
     

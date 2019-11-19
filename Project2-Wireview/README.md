@@ -1,8 +1,11 @@
 # Computer Networks - Project 2
 
-Wireview Program
+Wireview Program - Connor Mclaughlin and David Martindale
 
 Usage: `./wireview <filename.pcap>`
+
+
+Authorship document ~p2-authorship.jpeg
 
 
 Sources: 
