@@ -31,10 +31,10 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
     char ether_dst[ETH_ADDR_LEN];
     ether_ntoa_r((struct ether_addr *)(ether->ether_shost), ether_src);
     //printf("Ethernet SRC: %s\t", ether_src);
-    packetInfo.eth_src_map[ether_src] = packetInfo.eth_src_map.count(ether_src)+1;
+    packetInfo.eth_src_map[ether_src] = packetInfo.eth_src_map[ether_src]+1;
     ether_ntoa_r((struct ether_addr *)(ether->ether_dhost), ether_dst);
     //printf("Ethernet DST: %s\n", ether_dst);
-    packetInfo.eth_dst_map[ether_dst] = packetInfo.eth_dst_map.count(ether_dst)+1;
+    packetInfo.eth_dst_map[ether_dst] = packetInfo.eth_dst_map[ether_dst]+1;
 
     if (ntohs(ether->ether_type) == ETHERTYPE_ARP) { /* check if ARP */
         /* if ARP, check for sender/reciever addresses and protocol formats */
@@ -44,8 +44,8 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
         char* mac_dst;
         asprintf(&mac_src, "%02X:%02X:%02X:%02X:%02X:%02X\n", arpinfo->arp_sha[0], arpinfo->arp_sha[1], arpinfo->arp_sha[2], arpinfo->arp_sha[3], arpinfo->arp_sha[4], arpinfo->arp_sha[5]);
         asprintf(&mac_dst, "%02X:%02X:%02X:%02X:%02X:%02X\n", arpinfo->arp_tha[0], arpinfo->arp_tha[1], arpinfo->arp_tha[2], arpinfo->arp_tha[3], arpinfo->arp_tha[4], arpinfo->arp_tha[5]);
-        packetInfo.arp.arp_mac_src_map[mac_src] = packetInfo.arp.arp_mac_src_map.count(mac_src)+1;
-        packetInfo.arp.arp_mac_dst_map[mac_dst] = packetInfo.arp.arp_mac_dst_map.count(mac_dst)+1;
+        packetInfo.arp.arp_mac_src_map[mac_src] = packetInfo.arp.arp_mac_src_map[mac_src]+1;
+        packetInfo.arp.arp_mac_dst_map[mac_dst] = packetInfo.arp.arp_mac_dst_map[mac_dst]+1;
     }
     else if (ntohs(ether->ether_type) == ETHERTYPE_IP) { /* check if IP */
         /* getting src/dst IP addresses */
@@ -65,9 +65,9 @@ void packetHandler(unsigned char *userData, const struct pcap_pkthdr* pkthdr, co
                 inet_ntop(AF_INET, &(ip->ip_src), ip_src, INET_ADDRSTRLEN);
                 inet_ntop(AF_INET, &(ip->ip_dst), ip_dst, INET_ADDRSTRLEN);
             }
-            packetInfo.ip_src_map[ip_src] = packetInfo.ip_src_map.count(ip_src)+1;
-            packetInfo.ip_dst_map[ip_dst] = packetInfo.ip_dst_map.count(ip_dst)+1;
-            //packetInfo.ip_dst_map.insert(std::pair<std::string, uint32_t>(ip_dst, packetInfo.ip_dst_map.count(ip_dst)+1)); old method
+            packetInfo.ip_src_map[ip_src] = packetInfo.ip_src_map[ip_src]+1;
+            packetInfo.ip_dst_map[ip_dst] = packetInfo.ip_src_map[ip_dst]+1;
+            //packetInfo.ip_dst_map[ip_dst] = packetInfo.ip_dst_map.count(ip_dst)+1;
             //printf("IP src: %s\t IP dst: %s\n", ip_src, ip_dst);
         }
         
