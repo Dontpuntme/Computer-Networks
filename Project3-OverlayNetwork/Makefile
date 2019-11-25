@@ -1,5 +1,5 @@
-SOURCES := overlay.cpp ipPacket.cpp udpPacket.cpp
-HEADERS := overlay.h ipPacket.h udpPacket.h
+SOURCES := overlay.cpp
+HEADERS := overlay.h
 LINK := -lpcap
 OUTPUT := overlay
 
