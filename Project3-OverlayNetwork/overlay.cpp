@@ -38,11 +38,32 @@ void sendUDP(char* sourceaddr, char* destaddr, uint32_t ttl){
     ip->saddr = inet_addr(sourceaddr);
     ip->daddr = inet_addr(destaddr);
     ip->ttl = ttl;
+    ip->check = 0;
+    ip->frag_off=0;
+    ip->protocol=17;
+    ip->tot_len=5;
+    ip->tos=0;
     udp->source = DEFAULT_UDP_PORT;
     udp->dest = DEFAULT_UDP_PORT;
     udp->len = sizeof(struct udphdr);
     udp->check = 0;
     strcpy(send_buff, data);
+    int sock;
+    if ((sock = socket(AF_INET, SOCK_DGRAM,0))<0) {
+        perror("Socket Creation error");
+        exit(1);
+    }
+    size_t msg_len = strlen(packet);
+    sendto(sock, packet, msg_len,0, (sockaddr*)destaddr, sizeof(destaddr));
+    // stuff might be wrong with addr might need conversion to this format
+    //    serv_addr.sin_family = AF_INET; 
+    // serv_addr.sin_port = htons(port); 
+    
+    // if (inet_pton(AF_INET, address, &serv_addr.sin_addr)<=0) 
+    // { 
+    //     perror("Invalid address/ Address not supported"); 
+    //     exit(1);
+    // } 
     
 }
 
@@ -56,7 +77,6 @@ void readUDP(char* packet) {
     struct ip* ip = (struct ip*)(packet+ETH_HEAD_LEN+size_ip+udpSystem->uh_ulen);
     size_ip= (int)(ip->ip_hl*4);
     struct udphdr* udp = (struct udphdr *)(packet + ETH_HEAD_LEN + size_ip+udpSystem->uh_ulen);
-    
     
 }
 
