@@ -9,6 +9,8 @@
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#include <netdb.h> 
+#include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <vector>
 #include <algorithm>

@@ -77,7 +77,6 @@ void sendUDP(char* routeraddr, char* sourceaddr, char* destaddr, uint32_t ttl) {
     }
     size_t msg_len = strlen(packet);
     sendto(sock, packet, msg_len,0, (struct sockaddr*)&router_addr, sizeof(router_addr));
-    
 }
 
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
@@ -124,7 +123,6 @@ int routePacket(char* packet, std::vector<std::string> overlayIPs, std::vector<s
         return 1;
     }
 }
-
 void recieveUDP(char* buffer) {
     int sockfd, optVal, recvVal;
     struct sockaddr_in servAddr, cliAddr;
@@ -133,13 +131,15 @@ void recieveUDP(char* buffer) {
     socklen_t cliLen;
     
     // configuration/initialization
+    cliAddr.sin_family = AF_INET;
+    cliAddr.sin_port = htons(DEFAULT_UDP_PORT);
+    cliAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     cliLen = sizeof(cliAddr);
     bzero(buffer, MAX_SEGMENT_SIZE);
     bzero((char *) &servAddr, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
-    servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    
     servAddr.sin_port = htons((unsigned short)DEFAULT_UDP_PORT);
-
     // create socket
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("Error opening socket");
@@ -148,7 +148,14 @@ void recieveUDP(char* buffer) {
     // allows us to rerun server after segfaults
     optVal = 1;
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optVal, sizeof(int));
-
+    char hostbuffer[256]; 
+    char *IPbuffer; 
+    struct hostent *host_entry; 
+    int hostname; 
+    // To retrieve hostname 
+    hostname = gethostname(hostbuffer, sizeof(hostbuffer));
+    host_entry = gethostbyname(hostbuffer);
+    servAddr.sin_addr= *((struct in_addr*) (host_entry->h_addr_list[0]));
     // bind socket
     if (bind(sockfd, (struct sockaddr*)&servAddr, sizeof(servAddr)) < 0) {
         perror("Error binding socket");
@@ -217,7 +224,6 @@ int runEndHost(char* routerIP, char* hostIP, uint32_t ttl) {
                 &len); 
     buffer[n] = '\0'; 
     printf("Server : %s\n", buffer); 
-    close(sockfd);
 }
 
 int main(int argc, char** argv) {
