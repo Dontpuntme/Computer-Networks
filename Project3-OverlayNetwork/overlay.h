@@ -8,6 +8,7 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip.h>
+#include<bits/stdc++.h> 
 #include <netinet/if_ether.h>
 #include <netdb.h> 
 #include <netinet/in.h> 
@@ -24,6 +25,6 @@
 void printUsage();
 int runRouter(char* ipMappings);
 int runEndHost(char* routerIP, char* hostIP, uint32_t ttl);
-int routePacket(char* packet, std::vector<std::string> overlayIPs, std::vector<std::string> vmIPs);
+int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
 void readUDP(char* packet);
 void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);

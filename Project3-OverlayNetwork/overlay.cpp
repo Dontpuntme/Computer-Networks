@@ -13,7 +13,7 @@ void printUsage() {
     printf("End-Host Usage: ./overlay --host <router ip> <host ip> <ttl>\n");
 }
 
-void parseMappings(char* ipMappings, std::vector<std::string> overlayIPs, std::vector<std::string> vmIPs) {
+void parseMappings(char* ipMappings, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs) {
     char ipDelim[] = ":,";
     char* currIp; // current ip
     uint32_t countIp = 1;
@@ -80,7 +80,7 @@ void sendUDP(char* routeraddr, char* sourceaddr, char* destaddr, uint32_t ttl) {
 }
 
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
-int routePacket(char* packet, std::vector<std::string> overlayIPs, std::vector<std::string> vmIPs) {
+int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs) {
     uint32_t size_ip_system = 0;
     uint32_t size_ip = 0;
     
@@ -124,6 +124,7 @@ int routePacket(char* packet, std::vector<std::string> overlayIPs, std::vector<s
     }
 }
 void recieveUDP(char* buffer) {
+    printf("Attempting to recieve UDP\n");
     int sockfd, optVal, recvVal;
     struct sockaddr_in servAddr, cliAddr;
     struct hostent *hostp; /* maybe use for logging */
@@ -165,6 +166,7 @@ void recieveUDP(char* buffer) {
     if ((recvVal = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, (struct sockaddr *)&cliAddr, &cliLen)) < 0) {
         perror("Error reading from socket");
     }
+    printf("Recieved data from socket\n");
 }
 
 /* run process as router */
@@ -173,6 +175,9 @@ int runRouter(char* ipMappings) {
     std::vector<std::string> overlayIPs;
     std::vector<std::string> vmIPs;
     parseMappings(ipMappings, overlayIPs, vmIPs);
+
+    printf("Number of overlay networks parsed: %ld\n", overlayIPs.size());
+    printf("Number of overlay networks parsed: %ld\n", vmIPs.size());
 
     // listen for UDP messages, check for the overlay IP and send to corresponding vm IP, decrement ttl/drop packets as needed
     char* udpSegment = (char*)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
