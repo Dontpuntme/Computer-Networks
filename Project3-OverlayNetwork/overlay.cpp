@@ -214,22 +214,37 @@ void recieveUDP(char *buffer)
     struct sockaddr addr;
     bzero(buffer, MAX_SEGMENT_SIZE);
 
-    // get host info, make socket, bind it to port 4950
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // use IPv4 or IPv6, whichever
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE;
-    getaddrinfo(NULL, "34567", &hints, &res);
-    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    bind(sockfd, res->ai_addr, res->ai_addrlen);
-    byte_count = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
+    // Decarli notes
+    struct sockaddr_in test;
+    test.sin_family = AF_INET;
+    test.sin_port = htons(DEFAULT_UDP_PORT);
+    test.sin_addr.s_addr = INADDR_ANY;
+
+    int socktest = socket(AF_INET, SOCK_DGRAM, 0);
+    bind(socktest, (struct sockaddr *)&test, sizeof(sockaddr_in));
+    byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
-
-    // if ((recvVal = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, (struct sockaddr *)&cliAddr, &cliLen)) < 0) {
-    //     perror("Error reading from socket");
-    // }
     printf("Recieved data from socket\n");
+
+
+    // // PRE OFFICE HOURS
+    // // get host info, make socket, bind it to port 4950
+    // memset(&hints, 0, sizeof hints);
+    // hints.ai_family = AF_INET; // use IPv4 or IPv6, whichever
+    // hints.ai_socktype = SOCK_DGRAM;
+    // hints.ai_flags = AI_PASSIVE;
+    // getaddrinfo(NULL, "34567", &hints, &res);
+    // sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    // bind(sockfd, res->ai_addr, res->ai_addrlen);
+    // byte_count = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
+
+    // printf("recv()'d %d bytes of data in buf\n", byte_count);
+
+    // // if ((recvVal = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, (struct sockaddr *)&cliAddr, &cliLen)) < 0) {
+    // //     perror("Error reading from socket");
+    // // }
+    // printf("Recieved data from socket\n");
 }
 
 /* run process as router */
