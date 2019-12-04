@@ -222,7 +222,7 @@ void recieveUDP(char *buffer)
     getaddrinfo(NULL, "34567", &hints, &res);
     sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     bind(sockfd, res->ai_addr, res->ai_addrlen);
-    byte_count = recvfrom(sockfd, buffer, sizeof buffer, 0, &addr, &fromlen);
+    byte_count = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
 
