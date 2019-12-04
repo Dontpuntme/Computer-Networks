@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <pcap/pcap.h>
 #include <net/ethernet.h>
 #include <netinet/ether.h>
 #include <netinet/udp.h>
