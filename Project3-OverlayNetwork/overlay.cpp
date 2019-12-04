@@ -85,7 +85,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         perror("Socket Creation error");
         exit(1);
     }
-    size_t msg_len = strlen(packet);
+    size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data);
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
 }
 
