@@ -138,75 +138,6 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
 }
 void recieveUDP(char *buffer)
 {
-    // printf("Attempting to recieve UDP\n");
-    // int sockfd, optVal, recvVal;
-    // struct sockaddr_in servAddr, cliAddr;
-    // struct hostent *hostp; /* maybe use for logging */
-    // char *hostaddrp; /* maybe use for logging */
-    // socklen_t cliLen;
-
-    // // configuration/initialization
-    // cliAddr.sin_family = AF_INET;
-    // cliAddr.sin_port = htons(DEFAULT_UDP_PORT);
-    // cliAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    // cliLen = sizeof(cliAddr);
-    // bzero(buffer, MAX_SEGMENT_SIZE);
-    // bzero((char *) &servAddr, sizeof(servAddr));
-    // servAddr.sin_family = AF_INET;
-
-    // servAddr.sin_port = htons((unsigned short)DEFAULT_UDP_PORT);
-    // // create socket
-    // if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    //     perror("Error opening socket");
-    // }
-
-    // // allows us to rerun server after segfaults
-    // optVal = 1;
-    // setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optVal, sizeof(int));
-    // char hostbuffer[256];
-    // char *IPbuffer;
-    // struct hostent *host_entry;
-    // int hostname;
-    // // To retrieve hostname
-    // hostname = gethostname(hostbuffer, sizeof(hostbuffer));
-    // host_entry = gethostbyname(hostbuffer);
-    // servAddr.sin_addr= *((struct in_addr*) (host_entry->h_addr_list[0]));
-    // // bind socket
-    // const char* google_dns_server = "8.8.8.8";
-    // int dns_port = 53;
-
-    // struct sockaddr_in serv;
-    // int sock = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // //Socket could not be created
-    // if(sock < 0)
-    // {
-    //     std::cout << "Socket error" << std::endl;
-    // }
-
-    // memset(&serv, 0, sizeof(serv));
-    // serv.sin_family = AF_INET;
-    // serv.sin_addr.s_addr = inet_addr(google_dns_server);
-    // serv.sin_port = htons(dns_port);
-
-    // int err = connect(sock, (const struct sockaddr*)&serv, sizeof(serv));
-    // if (err < 0)
-    // {
-    //     std::cout << "Error number: " << errno
-    //         << ". Error message: " << strerror(errno) << std::endl;
-    // }
-
-    // struct sockaddr_in name;
-    // socklen_t namelen = sizeof(name);
-    // err = getsockname(sock, (struct sockaddr*)&name, &namelen);
-
-    // close(sock);
-    // if (bind(sockfd, (struct sockaddr*)&name.sin_addr, sizeof(servAddr)) < 0) {
-    //     perror("Error binding socket");
-    // }
-
-    // recieve segment from socket
-
     struct addrinfo hints, *res;
     int sockfd;
     int byte_count;
@@ -214,37 +145,19 @@ void recieveUDP(char *buffer)
     struct sockaddr addr;
     bzero(buffer, MAX_SEGMENT_SIZE);
 
-    // Decarli notes
     struct sockaddr_in test;
     test.sin_family = AF_INET;
     test.sin_port = htons(DEFAULT_UDP_PORT);
     test.sin_addr.s_addr = INADDR_ANY;
 
     int socktest = socket(AF_INET, SOCK_DGRAM, 0);
-    bind(socktest, (struct sockaddr *)&test, sizeof(sockaddr_in));
+    bind(socktest, (struct sockaddr *)&test, sizeof(test));
+    printf("Waiting at recvfrom");
     byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
     printf("Recieved data from socket\n");
 
-
-    // // PRE OFFICE HOURS
-    // // get host info, make socket, bind it to port 4950
-    // memset(&hints, 0, sizeof hints);
-    // hints.ai_family = AF_INET; // use IPv4 or IPv6, whichever
-    // hints.ai_socktype = SOCK_DGRAM;
-    // hints.ai_flags = AI_PASSIVE;
-    // getaddrinfo(NULL, "34567", &hints, &res);
-    // sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    // bind(sockfd, res->ai_addr, res->ai_addrlen);
-    // byte_count = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
-
-    // printf("recv()'d %d bytes of data in buf\n", byte_count);
-
-    // // if ((recvVal = recvfrom(sockfd, buffer, MAX_SEGMENT_SIZE, 0, (struct sockaddr *)&cliAddr, &cliLen)) < 0) {
-    // //     perror("Error reading from socket");
-    // // }
-    // printf("Recieved data from socket\n");
 }
 
 /* run process as router */
@@ -311,6 +224,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     }
 
     char buffer[MAX_SEGMENT_SIZE];
+    //make sure socket is non blocking eventually
     n = recvfrom(sockfd, (char *)buffer, MAX_SEGMENT_SIZE,
                  MSG_WAITALL, (struct sockaddr *)&router_IP,
                  &len);
