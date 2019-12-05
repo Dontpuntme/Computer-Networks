@@ -173,7 +173,6 @@ void recieveUDP(char *buffer)
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
     printf("Recieved data from socket\n");
-
 }
 
 /* run process as router */
@@ -219,6 +218,12 @@ int runRouter(char *ipMappings)
 /* run process as end-host */
 int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 {
+    bool fileFlag = true;
+    while (fileFlag)
+    {
+        fileFlag = !lookForFileAndProcess();
+    }
+
     struct sockaddr_in router_IP;
     router_IP.sin_port = DEFAULT_UDP_PORT;
     router_IP.sin_family = AF_INET;
@@ -241,7 +246,57 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     recieveUDP(serverUDP);
     printf("Server : %s\n", serverUDP);
 }
+bool lookForFileAndProcess()
+{
+    std::ifstream my_file("tosend.bin");
+    if (my_file)
+    {
+        sleep(2);
+        std::ifstream ifs;
+        ifs.open("tosend.bin", std::ifstream::binary);
+        int i = 0;
+        char c = ifs.get();
+        char *buffer = (char *)malloc(sizeof(char) * (8));
+        int a = 0;
+        while (ifs.good())
+        {
 
+            buffer[i] = c;
+            if (i > 7)
+            {
+              //  std::cout << buffer[i];
+            }
+            c = ifs.get();
+            i++;
+            if (i == 8)
+            {
+                a = int((char)(buffer[7]) << 24 |
+                        (char)(buffer[6]) << 16 |
+                        (char)(buffer[5]) << 8 |
+                        (char)(buffer[4]));
+                char *bufferTwo = (char *)realloc(buffer, 8 + a);
+                if (bufferTwo)
+                {
+                    buffer = bufferTwo;
+                }
+                else
+                {
+                    break;
+                    // deal with realloc failing because memory could not be allocated.
+                }
+            }
+        }
+        std::cout << a;
+        for(int k = 0; k<a;k++)
+        {
+            std::cout << buffer[8+k];
+        }
+        ifs.close();
+
+        return true;
+    }
+    return false;
+}
 int main(int argc, char **argv)
 {
     bool router = false;
