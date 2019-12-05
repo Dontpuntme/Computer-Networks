@@ -25,10 +25,12 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
         if (countIp % 2 == 0)
         {
             vmIPs.push_back(currIp);
+            printf("Mapped VM IP: %s\n", currIp);
         }
         else
         {
             overlayIPs.push_back(currIp);
+            printf("Mapped Overlay IP: %s\n", currIp);
         }
         currIp = strtok(NULL, ipDelim);
         countIp++;
@@ -85,7 +87,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         perror("Socket Creation error");
         exit(1);
     }
-    size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data);
+    size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
 }
 
@@ -217,7 +219,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         exit(1);
     }
     char test[] = "1.1.1.1";
-    sendUDP(routerIP, hostIP, test, ttl);
+    sendUDP(routerIP, test, hostIP, ttl);
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     {
         perror("socket creation failed");
