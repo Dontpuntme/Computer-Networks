@@ -104,7 +104,6 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     printf("Packet checksum at router: %d (SHOULD BE 0)\n", ip->ip_sum);
 
     // first check if ip is in our routing table
-    // TODO 
     char strOverlayIP[INET_ADDRSTRLEN];
     const char* result = inet_ntop(AF_INET, &(ip->ip_src), strOverlayIP, sizeof(strOverlayIP));
     if (result != NULL) {
@@ -113,7 +112,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     std::string overlayIP;
     uint32_t max = overlayIPs.size();
     for (uint32_t i = 0; i < max; i++) {
-        printf("Overlay IP: %s\n", overlayIPs[i]);
+        printf("Overlay IP: %s\n", overlayIPs[i].c_str());
     }
     // if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
     // {
@@ -128,9 +127,8 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     // }
 
     // update time to live, dropping packet if drops below 0
-    if (ip->ip_ttl < 1)
-    {
-        // drop packet
+    if (ip->ip_ttl < 1) { 
+        printf("TTL dropped below threshold, dropping packet\n");
         return -1;
     }
     else
@@ -143,11 +141,12 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
             exit(1);
         }
         // TODO fix send 
-        size_t msg_len = strlen(packet);
-        struct sockaddr dest;
-        dest.sa_family = AF_INET;
-        strncpy(dest.sa_data, (char *)(ip->ip_dst.s_addr), sizeof(dest.sa_data));
-        sendto(sock, packet, msg_len, 0, &dest, sizeof(dest));
+        size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+        struct sockaddr_in dest;
+        dest.sin_family = AF_INET;
+        dest.sin_port = htons(DEFAULT_UDP_PORT);
+        dest.sin_addr = ip->ip_dst;
+        sendto(sock, packet, msg_len, 0, (struct sockaddr *)&dest, sizeof(dest));
         return 1;
     }
 }
