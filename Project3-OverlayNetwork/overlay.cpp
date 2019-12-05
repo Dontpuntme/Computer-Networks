@@ -25,16 +25,19 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
         if (countIp % 2 == 0)
         {
             vmIPs.push_back(currIp);
+            printf("Mapped VM IP: %s\n", currIp);
         }
         else
         {
             overlayIPs.push_back(currIp);
+            printf("Mapped Overlay IP: %s\n", currIp);
         }
         currIp = strtok(NULL, ipDelim);
         countIp++;
     }
 }
 
+// TODO add functionality to send the filesize then 
 void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
 {
     const char *data = "Hello";
@@ -80,13 +83,15 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     udp->check = 0;
     strcpy(send_buff, data);
     int sock;
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
         perror("Socket Creation error");
         exit(1);
     }
-    size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data);
+    // TODO fix send msg size
+    size_t msg_len = 1028;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
+    usleep(100000); // packets must be separated 100ms
 }
 
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
@@ -95,44 +100,55 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     uint32_t size_ip_system = 0;
     uint32_t size_ip = 0;
 
-    struct ip *ip = (struct ip *)(packet + ETH_HEAD_LEN);
+    struct ip *ip = (struct ip *)(packet);
     size_ip = (int)(ip->ip_hl * 4);
-    struct udphdr *udp = (struct udphdr *)packet + ETH_HEAD_LEN + size_ip;
+    struct udphdr *udp = (struct udphdr *)(packet + size_ip);
+
+    printf("Packet checksum at router: %d (SHOULD BE 0)\n", ip->ip_sum);
 
     // first check if ip is in our routing table
-    std::string overlayIP = (std::string)(inet_ntoa(ip->ip_src));
-    if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
-    {
-        // overlay IP found in table
-        printf("Overlay IP %s found in lookup table!\n", overlayIP.c_str());
+    char strOverlayIP[INET_ADDRSTRLEN];
+    const char* result = inet_ntop(AF_INET, &(ip->ip_src), strOverlayIP, sizeof(strOverlayIP));
+    if (result != NULL) {
+        printf("router string %s\n", strOverlayIP);
     }
-    else
-    {
-        // overlay IP not found in table, drop packet
-        printf("Overlay IP %s not found in lookup table. :(\n", overlayIP.c_str());
+    std::string overlayIP;
+    uint32_t max = overlayIPs.size();
+    bool foundMatch = false;
+    for (uint32_t i = 0; i < max; i++) {
+        if ((strcmp(strOverlayIP, overlayIPs[i].c_str()) == 0)) {
+            printf("Found match for overlay IP in routing table!\n");
+            foundMatch = true;
+            break;
+        }
+        printf("Overlay IP: %s\n", overlayIPs[i].c_str());
+    }
+    if (!foundMatch) {
+        printf("No match found for router string, exiting. :(\n");
         return 0;
     }
 
     // update time to live, dropping packet if drops below 0
-    if (ip->ip_ttl < 1)
-    {
-        // drop packet
+    if (ip->ip_ttl < 1) { 
+        printf("TTL dropped below threshold, dropping packet\n");
         return -1;
     }
     else
     {
         ip->ip_ttl--;
         int sock;
-        if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+        if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         {
             perror("Socket Creation error");
             exit(1);
         }
-        size_t msg_len = strlen(packet);
-        struct sockaddr dest;
-        dest.sa_family = AF_INET;
-        strncpy(dest.sa_data, (char *)(ip->ip_dst.s_addr), sizeof(dest.sa_data));
-        sendto(sock, packet, msg_len, 0, &dest, sizeof(dest));
+        // TODO fix send msg size
+        size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+        struct sockaddr_in dest;
+        dest.sin_family = AF_INET;
+        dest.sin_port = htons(DEFAULT_UDP_PORT);
+        dest.sin_addr = ip->ip_dst;
+        sendto(sock, packet, msg_len, 0, (struct sockaddr *)&dest, sizeof(dest));
         return 1;
     }
 }
@@ -153,7 +169,6 @@ void recieveUDP(char *buffer)
     //int socktest = socket(AF_INET, SOCK_DGRAM, 0);
     int socktest = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
     bind(socktest, (struct sockaddr *)&test, sizeof(test));
-    printf("Waiting at recvfrom");
     byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
@@ -202,7 +217,6 @@ int runRouter(char *ipMappings)
 }
 
 /* run process as end-host */
-// TODO maybe refactor to just take in one string and parse the ips/ttl from there (see sample input at top of doc)
 int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 {
     struct sockaddr_in router_IP;
@@ -217,20 +231,15 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         exit(1);
     }
     char test[] = "1.1.1.1";
-    sendUDP(routerIP, hostIP, test, ttl);
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    sendUDP(routerIP, test, hostIP, ttl);
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP)) < 0)
     {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-
-    char buffer[MAX_SEGMENT_SIZE];
-    //make sure socket is non blocking eventually
-    n = recvfrom(sockfd, (char *)buffer, MAX_SEGMENT_SIZE,
-                 MSG_WAITALL, (struct sockaddr *)&router_IP,
-                 &len);
-    buffer[n] = '\0';
-    printf("Server : %s\n", buffer);
+    char *serverUDP= (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
+    recieveUDP(serverUDP);
+    printf("Server : %s\n", serverUDP);
 }
 
 int main(int argc, char **argv)
