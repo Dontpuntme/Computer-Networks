@@ -102,7 +102,12 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     struct udphdr *udp = (struct udphdr *)packet + ETH_HEAD_LEN + size_ip;
 
     // first check if ip is in our routing table
-    std::string overlayIP = (std::string)(inet_ntoa(ip->ip_src));
+    char strOverlayIP[INET_ADDRSTRLEN];
+    const char* result = inet_ntop(AF_INET, &(ip->ip_src), strOverlayIP, sizeof(strOverlayIP));
+    if (result != NULL) {
+        printf("router string %s\n", strOverlayIP);
+    }
+    std::string overlayIP;
     if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
     {
         // overlay IP found in table
