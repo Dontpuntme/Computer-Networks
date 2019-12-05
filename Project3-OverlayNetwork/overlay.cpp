@@ -116,8 +116,9 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     uint32_t max = overlayIPs.size();
     bool foundMatch = false;
     for (uint32_t i = 0; i < max; i++) {
+        char tableIP[INET_ADDRSTRLEN] = overlayIPs.at[i];
+        printf("Checking overlay IP: %s against IP in table: %s\n", strOverlayIP, tableIP);
         if ((strcmp(strOverlayIP, overlayIPs[i].c_str()) == 0)) {
-            printf("Checking overlay IP: %s against IP in table: %s\n", (strOverlayIP, overlayIPs[i].c_str()));
             printf("Found match for overlay IP in routing table!\n");
             foundMatch = true;
             break;
