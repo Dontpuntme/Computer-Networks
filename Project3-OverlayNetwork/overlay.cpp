@@ -37,7 +37,7 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
     }
 }
 
-// TODO add functionality to send the filesize then 
+// TODO add functionality to send the filesize then
 void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
 {
     const char *data = "Hello";
@@ -89,41 +89,49 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         exit(1);
     }
     // TODO fix send msg size
-    size_t msg_len = 1028;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+    size_t msg_len = 1028; // sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
     usleep(100000); // packets must be separated 100ms
 }
 
-void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, unsigned short retcode) {
-    FILE * logFile;
-    logFile = fopen ("ROUTER_log.txt","a");
+void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, short retcode)
+{
+    FILE *logFile;
+    logFile = fopen("ROUTER_log.txt", "a");
     struct timespec time;
-    if (clock_gettime(CLOCK_REALTIME,&time)) {
+    if (clock_gettime(CLOCK_REALTIME, &time))
+    {
         perror("Could not get time");
         return;
     }
-    fprintf(logFile,"%d  %s  %s  %d  %s\n", (uint32_t)time.tv_sec, srcOverlayIP.c_str(), dstOverlayIP.c_str(), ipdent, retcodeString(retcode).c_str());
+    fprintf(logFile, "%d  %s  %s  %d  %s\n", (uint32_t)time.tv_sec, srcOverlayIP.c_str(), dstOverlayIP.c_str(), ipdent, retcodeString(retcode).c_str());
     fclose(logFile);
 }
 
-std::string retcodeString(unsigned short retcode) {
-    if (retcode == -1) {
-        return (std::string)"TTL_EXPIRED";
+std::string retcodeString(unsigned short retcode)
+{
+    if (retcode == -1)
+    {
+        return (std::string) "TTL_EXPIRED";
     }
-    else if (retcode == 0) {
-        return (std::string)"NO_ROUTE_TO_HOST";
+    else if (retcode == 0)
+    {
+        return (std::string) "NO_ROUTE_TO_HOST";
     }
-    else if (retcode == 1) {
-        return (std::string)"SENT_OKAY";
+    else if (retcode == 1)
+    {
+        return (std::string) "SENT_OKAY";
     }
-    else {
-        return (std::string)"UNDEF_BEHAVIOR";
+    else
+    {
+        return (std::string) "UNDEF_BEHAVIOR";
     }
 }
 
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
-int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs) {
-    unsigned short retcode = -2;
+int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs)
+{
+    short retcode = -2;
     uint32_t size_ip = 0;
 
     struct ip *ip = (struct ip *)(packet);
@@ -135,14 +143,16 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
 
     // first check src/dst overlay IPs
     char srcOverlayIP[INET_ADDRSTRLEN];
-    const char* ret1 = inet_ntop(AF_INET, &(ip->ip_src), srcOverlayIP, sizeof(srcOverlayIP));
-    if (ret1 == NULL) {
+    const char *ret1 = inet_ntop(AF_INET, &(ip->ip_src), srcOverlayIP, sizeof(srcOverlayIP));
+    if (ret1 == NULL)
+    {
         perror("Invalid src overlay IP\n");
         exit(1);
     }
     char dstOverlayIP[INET_ADDRSTRLEN];
-    const char* ret2 = inet_ntop(AF_INET, &(ip->ip_dst), dstOverlayIP, sizeof(dstOverlayIP));
-    if (ret2 == NULL) {
+    const char *ret2 = inet_ntop(AF_INET, &(ip->ip_dst), dstOverlayIP, sizeof(dstOverlayIP));
+    if (ret2 == NULL)
+    {
         perror("Invalid dst overlay IP\n");
         exit(1);
     }
@@ -151,18 +161,21 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     std::string overlayIP;
     uint32_t i = 0;
     bool foundMatch = false;
-    const char* tableIP = (char*)malloc(sizeof(char)*INET_ADDRSTRLEN);
-    for (i = 0; i < overlayIPs.size(); i++) {
+    const char *tableIP = (char *)malloc(sizeof(char) * INET_ADDRSTRLEN);
+    for (i = 0; i < overlayIPs.size(); i++)
+    {
         tableIP = overlayIPs.at(i).c_str();
         printf("Checking overlay IP: %s against IP in table: %s\n", srcOverlayIP, tableIP);
-        if ((strcmp(srcOverlayIP, overlayIPs[i].c_str()) == 0)) {
+        if ((strcmp(srcOverlayIP, overlayIPs[i].c_str()) == 0))
+        {
             printf("Found match for overlay IP in routing table!\n");
             foundMatch = true;
             break;
         }
         printf("Overlay IP: %s\n", overlayIPs[i].c_str());
     }
-    if (!foundMatch) {
+    if (!foundMatch)
+    {
         printf("No match found for router string, exiting. :(\n");
         retcode = 0;
         routerlog(srcOverlayIP, dstOverlayIP, ip->ip_id, retcode);
@@ -170,7 +183,8 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     }
 
     // update time to live, dropping packet if drops to 0
-    if (ip->ip_ttl <= 1) { 
+    if (ip->ip_ttl <= 1)
+    {
         printf("TTL dropped to zero, dropping packet\n");
         retcode = -1;
         routerlog(srcOverlayIP, dstOverlayIP, ip->ip_id, retcode);
@@ -190,7 +204,8 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         struct sockaddr_in dest;
         dest.sin_family = AF_INET;
         dest.sin_port = htons(DEFAULT_UDP_PORT);
-        if (inet_pton(AF_INET, vmIPs[i].c_str(), &dest.sin_addr) <= 0) {
+        if (inet_pton(AF_INET, vmIPs[i].c_str(), &dest.sin_addr) <= 0)
+        {
             perror("Invalid address/ Address not supported");
             exit(1);
         }
@@ -201,6 +216,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         return retcode;
     }
 }
+
 void recieveUDP(char *buffer)
 {
     struct addrinfo hints, *res;
@@ -228,8 +244,8 @@ void recieveUDP(char *buffer)
 int runRouter(char *ipMappings)
 {
     // create log file/clear contents
-    FILE * logFile;
-    logFile = fopen("log.txt","w");
+    FILE *logFile;
+    logFile = fopen("log.txt", "w");
     fclose(logFile);
 
     // parsing mappings for list of overlay and VM IPs
@@ -296,10 +312,11 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    char *serverUDP= (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
+    char *serverUDP = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
     recieveUDP(serverUDP);
     printf("Server : %s\n", serverUDP);
 }
+
 bool lookForFileAndProcess()
 {
     std::ifstream my_file("tosend.bin");
@@ -318,7 +335,7 @@ bool lookForFileAndProcess()
             buffer[i] = c;
             if (i > 7)
             {
-              //  std::cout << buffer[i];
+                //  std::cout << buffer[i];
             }
             c = ifs.get();
             i++;
@@ -341,9 +358,9 @@ bool lookForFileAndProcess()
             }
         }
         std::cout << a;
-        for(int k = 0; k<a;k++)
+        for (int k = 0; k < a; k++)
         {
-            std::cout << buffer[8+k];
+            std::cout << buffer[8 + k];
         }
         ifs.close();
 
@@ -351,6 +368,7 @@ bool lookForFileAndProcess()
     }
     return false;
 }
+
 int main(int argc, char **argv)
 {
     bool router = false;
