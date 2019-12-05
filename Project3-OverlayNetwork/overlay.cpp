@@ -215,7 +215,6 @@ int runRouter(char *ipMappings)
 }
 
 /* run process as end-host */
-// TODO maybe refactor to just take in one string and parse the ips/ttl from there (see sample input at top of doc)
 int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 {
     struct sockaddr_in router_IP;
@@ -231,19 +230,14 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     }
     char test[] = "1.1.1.1";
     sendUDP(routerIP, test, hostIP, ttl);
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP)) < 0)
     {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-
-    char buffer[MAX_SEGMENT_SIZE];
-    //make sure socket is non blocking eventually
-    n = recvfrom(sockfd, (char *)buffer, MAX_SEGMENT_SIZE,
-                 MSG_WAITALL, (struct sockaddr *)&router_IP,
-                 &len);
-    buffer[n] = '\0';
-    printf("Server : %s\n", buffer);
+    char *serverResponse = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
+    recieveUDP(serverResponse);
+    printf("Server : %s\n", serverResponse);
 }
 
 int main(int argc, char **argv)
