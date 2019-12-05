@@ -9,12 +9,15 @@
 #include <netinet/ip.h>
 #include<bits/stdc++.h> 
 #include <netinet/if_ether.h>
+#include <sys/stat.h>
 #include <netdb.h> 
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <vector>
 #include <algorithm>
 #include <string>
+#include<iostream>
+#include <fstream>
 
 #define ETH_ADDR_LEN 6
 #define ETH_HEAD_LEN 14
@@ -27,3 +30,4 @@ int runEndHost(char* routerIP, char* hostIP, uint32_t ttl);
 int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
 void readUDP(char* packet);
 void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
+bool lookForFileAndProcess();
