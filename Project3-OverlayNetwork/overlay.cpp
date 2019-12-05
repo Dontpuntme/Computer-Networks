@@ -87,7 +87,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         perror("Socket Creation error");
         exit(1);
     }
-    size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+    size_t msg_len = 1028;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
 }
 
@@ -97,9 +97,9 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     uint32_t size_ip_system = 0;
     uint32_t size_ip = 0;
 
-    struct ip *ip = (struct ip *)(packet + ETH_HEAD_LEN);
+    struct ip *ip = (struct ip *)(packet);
     size_ip = (int)(ip->ip_hl * 4);
-    struct udphdr *udp = (struct udphdr *)packet + ETH_HEAD_LEN + size_ip;
+    struct udphdr *udp = (struct udphdr *)(packet + size_ip);
 
     printf("Packet checksum at router: %d (SHOULD BE 0)\n", ip->ip_sum);
 
