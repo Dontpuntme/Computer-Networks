@@ -150,7 +150,8 @@ void recieveUDP(char *buffer)
     test.sin_port = htons(DEFAULT_UDP_PORT);
     test.sin_addr.s_addr = INADDR_ANY;
 
-    int socktest = socket(AF_INET, SOCK_DGRAM, 0);
+    //int socktest = socket(AF_INET, SOCK_DGRAM, 0);
+    int socktest = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
     bind(socktest, (struct sockaddr *)&test, sizeof(test));
     printf("Waiting at recvfrom");
     byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
