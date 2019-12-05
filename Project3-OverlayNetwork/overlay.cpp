@@ -89,7 +89,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         exit(1);
     }
     // TODO fix send msg size
-    size_t msg_len = 1028; // sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+    size_t msg_len = (sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
     usleep(100000); // packets must be separated 100ms
 }
