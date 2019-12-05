@@ -80,7 +80,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     udp->check = 0;
     strcpy(send_buff, data);
     int sock;
-    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
     {
         perror("Socket Creation error");
         exit(1);
@@ -123,7 +123,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     {
         ip->ip_ttl--;
         int sock;
-        if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+        if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
         {
             perror("Socket Creation error");
             exit(1);
