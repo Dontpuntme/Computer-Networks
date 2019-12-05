@@ -151,6 +151,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         dest.sin_family = AF_INET;
         dest.sin_port = htons(DEFAULT_UDP_PORT);
         dest.sin_addr = ip->ip_dst;
+        printf("Router sending out to dest %s\n", inet_ntoa(dest.sin_addr));
         sendto(sock, packet, msg_len, 0, (struct sockaddr *)&dest, sizeof(dest));
         return 1;
     }
