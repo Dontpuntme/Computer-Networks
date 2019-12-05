@@ -94,7 +94,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     usleep(100000); // packets must be separated 100ms
 }
 
-void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, short retcode)
+void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, int retcode)
 {
     FILE *logFile;
     logFile = fopen("ROUTER_log.txt", "a");
@@ -108,7 +108,7 @@ void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned shor
     fclose(logFile);
 }
 
-std::string retcodeString(unsigned short retcode)
+std::string retcodeString(int retcode)
 {
     if (retcode == -1)
     {
@@ -131,7 +131,7 @@ std::string retcodeString(unsigned short retcode)
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
 int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs)
 {
-    short retcode = -2;
+    int retcode = -2;
     uint32_t size_ip = 0;
 
     struct ip *ip = (struct ip *)(packet);

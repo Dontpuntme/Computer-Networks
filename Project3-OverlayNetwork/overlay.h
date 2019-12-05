@@ -28,6 +28,6 @@ int runEndHost(char* routerIP, char* hostIP, uint32_t ttl);
 int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
 void readUDP(char* packet);
 void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
-std::string retcodeString(unsigned short retcode);
-void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, unsigned short retcode);
+std::string retcodeString(int retcode);
+void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, int retcode);
 bool lookForFileAndProcess();
