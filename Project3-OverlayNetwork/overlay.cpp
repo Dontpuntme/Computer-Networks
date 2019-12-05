@@ -111,17 +111,21 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         printf("router string %s\n", strOverlayIP);
     }
     std::string overlayIP;
-    if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
-    {
-        // overlay IP found in table
-        printf("Overlay IP %s found in lookup table!\n", overlayIP.c_str());
+    uint32_t max = overlayIPs.size();
+    for (uint32_t i = 0; i < max; i++) {
+        printf("Overlay IP: %s\n", overlayIPs[i]);
     }
-    else
-    {
-        // overlay IP not found in table, drop packet
-        printf("Overlay IP %s not found in lookup table. :(\n", overlayIP.c_str());
-        return 0;
-    }
+    // if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
+    // {
+    //     // overlay IP found in table
+    //     printf("Overlay IP %s found in lookup table!\n", overlayIP.c_str());
+    // }
+    // else
+    // {
+    //     // overlay IP not found in table, drop packet
+    //     printf("Overlay IP %s not found in lookup table. :(\n", overlayIP.c_str());
+    //     return 0;
+    // }
 
     // update time to live, dropping packet if drops below 0
     if (ip->ip_ttl < 1)
