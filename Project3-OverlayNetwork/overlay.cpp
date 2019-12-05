@@ -37,6 +37,7 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
     }
 }
 
+// TODO add functionality to send the filesize then 
 void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
 {
     const char *data = "Hello";
@@ -90,6 +91,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     // TODO fix send msg size
     size_t msg_len = 1028;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
+    usleep(100000); // packets must be separated 100ms
 }
 
 /* decrement ttl, send udp to dest ip specified in packet (return -1 if packet dropped, 0 if ip not in overlay table, 1 if sent successfully) */
@@ -119,7 +121,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
             foundMatch = true;
             break;
         }
-        printf("Overlay IP: %s\n", overlayIPs[i].c_str()); // TODO comment out before turning in
+        printf("Overlay IP: %s\n", overlayIPs[i].c_str());
     }
     if (!foundMatch) {
         printf("No match found for router string, exiting. :(\n");
@@ -235,9 +237,9 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    char *serverResponse = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
-    recieveUDP(serverResponse);
-    printf("Server : %s\n", serverResponse);
+    char *serverUDP= (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
+    recieveUDP(serverUDP);
+    printf("Server : %s\n", serverUDP);
 }
 
 int main(int argc, char **argv)
