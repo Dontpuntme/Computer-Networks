@@ -113,10 +113,10 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         printf("router string %s\n", strOverlayIP);
     }
     std::string overlayIP;
-    uint32_t max = overlayIPs.size();
+    uint32_t i = 0;
     bool foundMatch = false;
     const char* tableIP = (char*)malloc(sizeof(char)*INET_ADDRSTRLEN);
-    for (uint32_t i = 0; i < max; i++) {
+    for (i = 0; i < overlayIPs.size(); i++) {
         tableIP = overlayIPs.at(i).c_str();
         printf("Checking overlay IP: %s against IP in table: %s\n", strOverlayIP, tableIP);
         if ((strcmp(strOverlayIP, overlayIPs[i].c_str()) == 0)) {
@@ -150,7 +150,10 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
         struct sockaddr_in dest;
         dest.sin_family = AF_INET;
         dest.sin_port = htons(DEFAULT_UDP_PORT);
-        dest.sin_addr = ip->ip_dst;
+        if (inet_pton(AF_INET, vmIPs[i].c_str(), &dest.sin_addr) <= 0) {
+            perror("Invalid address/ Address not supported");
+            exit(1);
+        }
         printf("Router sending out to dest %s\n", inet_ntoa(dest.sin_addr));
         sendto(sock, packet, msg_len, 0, (struct sockaddr *)&dest, sizeof(dest));
         return 1;
