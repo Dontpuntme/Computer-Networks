@@ -25,12 +25,12 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
         if (countIp % 2 == 0)
         {
             overlayIPs.push_back(currIp); // TODO make sure these are correct (overlay vs VM)
-            printf("Mapped VM IP: %s\n", currIp);
+            printf("Mapped Overlay IP: %s\n", currIp);
         }
         else
         {
             vmIPs.push_back(currIp);
-            printf("Mapped Overlay IP: %s\n", currIp);
+            printf("Mapped VM IP: %s\n", currIp);
         }
         currIp = strtok(NULL, ipDelim);
         countIp++;
