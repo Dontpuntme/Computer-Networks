@@ -29,5 +29,5 @@ int runRouter(char* ipMappings);
 int runEndHost(char* routerIP, char* hostIP, uint32_t ttl);
 int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
 void readUDP(char* packet);
-void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
-bool lookForFileAndProcess();
+void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl,char* data, uint32_t datalen,uint16_t id);
+bool lookForFileAndProcess(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
