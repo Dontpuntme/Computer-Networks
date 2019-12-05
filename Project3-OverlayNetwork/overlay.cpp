@@ -115,8 +115,8 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     std::string overlayIP;
     uint32_t max = overlayIPs.size();
     bool foundMatch = false;
+    const char* tableIP = (char*)malloc(sizeof(char)*INET_ADDRSTRLEN);
     for (uint32_t i = 0; i < max; i++) {
-        const char* tableIP = (char*)malloc(sizeof(char)*INET_ADDRSTRLEN);
         tableIP = overlayIPs.at(i).c_str();
         printf("Checking overlay IP: %s against IP in table: %s\n", strOverlayIP, tableIP);
         if ((strcmp(strOverlayIP, overlayIPs[i].c_str()) == 0)) {
@@ -124,7 +124,6 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
             foundMatch = true;
             break;
         }
-        free((void*)tableIP);
         printf("Overlay IP: %s\n", overlayIPs[i].c_str());
     }
     if (!foundMatch) {
