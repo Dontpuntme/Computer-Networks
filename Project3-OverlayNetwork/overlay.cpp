@@ -101,6 +101,8 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     size_ip = (int)(ip->ip_hl * 4);
     struct udphdr *udp = (struct udphdr *)packet + ETH_HEAD_LEN + size_ip;
 
+    printf("Packet checksum at router: %d\n", ip->ip_sum);
+
     // first check if ip is in our routing table
     char strOverlayIP[INET_ADDRSTRLEN];
     const char* result = inet_ntop(AF_INET, &(ip->ip_src), strOverlayIP, sizeof(strOverlayIP));
@@ -160,7 +162,6 @@ void recieveUDP(char *buffer)
     //int socktest = socket(AF_INET, SOCK_DGRAM, 0);
     int socktest = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
     bind(socktest, (struct sockaddr *)&test, sizeof(test));
-    printf("Waiting at recvfrom");
     byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
