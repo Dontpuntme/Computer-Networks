@@ -87,6 +87,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         perror("Socket Creation error");
         exit(1);
     }
+    // TODO fix send msg size
     size_t msg_len = 1028;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
 }
@@ -111,20 +112,19 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     }
     std::string overlayIP;
     uint32_t max = overlayIPs.size();
+    bool foundMatch = false;
     for (uint32_t i = 0; i < max; i++) {
-        printf("Overlay IP: %s\n", overlayIPs[i].c_str());
+        if ((strcmp(strOverlayIP, overlayIPs[i].c_str()) == 0)) {
+            printf("Found match for overlay IP in routing table!\n");
+            foundMatch = true;
+            break;
+        }
+        printf("Overlay IP: %s\n", overlayIPs[i].c_str()); // TODO comment out before turning in
     }
-    // if (std::find(overlayIPs.begin(), overlayIPs.end(), overlayIP) != overlayIPs.end())
-    // {
-    //     // overlay IP found in table
-    //     printf("Overlay IP %s found in lookup table!\n", overlayIP.c_str());
-    // }
-    // else
-    // {
-    //     // overlay IP not found in table, drop packet
-    //     printf("Overlay IP %s not found in lookup table. :(\n", overlayIP.c_str());
-    //     return 0;
-    // }
+    if (!foundMatch) {
+        printf("No match found for router string, exiting. :(\n");
+        return 0;
+    }
 
     // update time to live, dropping packet if drops below 0
     if (ip->ip_ttl < 1) { 
@@ -140,7 +140,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
             perror("Socket Creation error");
             exit(1);
         }
-        // TODO fix send 
+        // TODO fix send msg size
         size_t msg_len = sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
         struct sockaddr_in dest;
         dest.sin_family = AF_INET;
