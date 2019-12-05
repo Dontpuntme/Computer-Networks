@@ -101,9 +101,10 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
     size_ip = (int)(ip->ip_hl * 4);
     struct udphdr *udp = (struct udphdr *)packet + ETH_HEAD_LEN + size_ip;
 
-    printf("Packet checksum at router: %d\n", ip->ip_sum);
+    printf("Packet checksum at router: %d (SHOULD BE 0)\n", ip->ip_sum);
 
     // first check if ip is in our routing table
+    // TODO 
     char strOverlayIP[INET_ADDRSTRLEN];
     const char* result = inet_ntop(AF_INET, &(ip->ip_src), strOverlayIP, sizeof(strOverlayIP));
     if (result != NULL) {
@@ -137,6 +138,7 @@ int routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vector<
             perror("Socket Creation error");
             exit(1);
         }
+        // TODO fix send 
         size_t msg_len = strlen(packet);
         struct sockaddr dest;
         dest.sa_family = AF_INET;
