@@ -294,7 +294,7 @@ int runRouter(char *ipMappings)
         }
     }
     // free memory
-    //free(udpSegment);
+    free(udpSegment);
 }
 
 /* run process as end-host */
@@ -344,6 +344,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     int numSegmentsToRecv = 1;
     if (ip->ip_id == 0) { // figure out how many more segments we should be expecting
         printf("Looking at packet id 0, figuring out how many segments to recieve\n");
+        int filesize = (int)(serverUDP, sizeof(char), sizeof(struct iphdr) + sizeof(struct udphdr));
+        printf("%d\n",filesize);
         //numSegmentsToRecv = ...
     }
 
@@ -352,10 +354,6 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     outputFile += "test";
     outputFile += ipBuffer;
     outputFile += ".bin";
-
-    // char filename[INET_ADDRSTRLEN + 4 + 1];
-    // snprintf(filename, INET_ADDRSTRLEN+4 + 1, "%s.bin", ipBuffer);
-    // printf("Prepared to write to file: %s\n", filename);
 
     printf("Prepared to write to file: %s\n", outputFile.c_str());
 
@@ -382,7 +380,7 @@ void recieveAndWriteToFile(int numSegmentsToRecv, FILE* outfile, int rSocket) {
         printf("Wrote segment %d from router\n", i);
     }
     fclose(outfile);
-    //free(serverUDP);
+    free(serverUDP);
 }
 
 
@@ -447,7 +445,7 @@ bool lookForFileAndProcess(char *routerIP, char *sourceaddr, uint32_t ttl)
             sendUDP(routerIP, sourceaddr, l, ttl, &buffer[8 + a - numberLeft], numberLeft, numberOfThousands + 1);
         }
         ifs.close();
-        //free(buffer);
+        free(buffer);
         return true;
     }
     return false;
