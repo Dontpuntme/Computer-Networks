@@ -1,7 +1,7 @@
 import struct
 import socket
 
-ip_txt = '5.6.7.8'
+ip_txt = '125.6.7.8'
 content = 'Just testing if this works\n'
 content_len = len(content)
 

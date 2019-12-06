@@ -37,11 +37,10 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
     }
 }
 
-// TODO add functionality to send the filesize then
-void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
+// TODO add functionality to send the filesize then 
+void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl,char* data, uint32_t datalen, uint16_t id)
 {
-    const char *data = "Hello";
-    char *packet = (char *)malloc(sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
+    char *packet = (char *)malloc(sizeof(struct iphdr) + sizeof(struct udphdr) + datalen);
     struct sockaddr_in dest_addr;
     struct sockaddr_in src_addr;
     struct sockaddr_in router_addr;
@@ -57,11 +56,12 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     }
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(DEFAULT_UDP_PORT);
-    if (inet_pton(AF_INET, destaddr, &dest_addr.sin_addr) <= 0)
-    {
-        perror("Invalid address/ Address not supported");
-        exit(1);
-    }
+    // if (inet_pton(AF_INET, destaddr, &dest_addr.sin_addr) <= 0)
+    // {
+    //     perror("Invalid address/ Address not supported");
+    //     exit(1);
+    // }
+    dest_addr.sin_addr.s_addr=destAddr;
     src_addr.sin_family = AF_INET;
     src_addr.sin_port = htons(DEFAULT_UDP_PORT);
     if (inet_pton(AF_INET, sourceaddr, &src_addr.sin_addr) <= 0)
@@ -77,6 +77,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
     ip->protocol = 17;
     ip->tot_len = 5;
     ip->tos = 0;
+    ip->id;
     udp->source = htons(DEFAULT_UDP_PORT);
     udp->dest = htons(DEFAULT_UDP_PORT);
     udp->len = sizeof(struct udphdr);
@@ -89,7 +90,10 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         exit(1);
     }
 
-    size_t msg_len = (sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
+    // TODO fix send msg size
+    size_t msg_len = datalen;// sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
+    //size_t msg_len = (sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
+
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
     usleep(100000); // packets must be separated 100ms
 }
@@ -295,12 +299,6 @@ int runRouter(char *ipMappings)
 /* run process as end-host */
 int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 {
-    bool fileFlag = true;
-    while (fileFlag)
-    {
-        fileFlag = !lookForFileAndProcess();
-    }
-
     // create and bind a socket to recv from
     int rSocket = recvSocket();
 
@@ -316,7 +314,12 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         exit(1);
     }
     char test[] = "1.1.1.1";
-    sendUDP(routerIP, test, hostIP, ttl);
+  //  sendUDP(routerIP, test, hostIP, ttl);
+    bool fileFlag = true;
+    while (fileFlag)
+    {
+        fileFlag = !lookForFileAndProcess(routerIP, test, hostIP, ttl);
+    }
     if ((sockfd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP)) < 0)
     {
         perror("socket creation failed");
@@ -329,7 +332,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     printf("Server : %s\n", serverUDP);
 }
 
-bool lookForFileAndProcess()
+bool lookForFileAndProcess(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl)
 {
     std::ifstream my_file("tosend.bin");
     if (my_file)
@@ -369,13 +372,58 @@ bool lookForFileAndProcess()
                 }
             }
         }
-        std::cout << a;
+      
         for (int k = 0; k < a; k++)
         {
+            //std::cout << a;
             std::cout << buffer[8 + k];
         }
+        // int j=0;
+        // char* destAddrBuffer = (char*) malloc(50);
+        // for(int k = 0; k<4; k++)
+        // {
+        // uint8_t firstByte = buffer[k];
+        // uint8_t third = (firstByte/100);
+        // char thirdchar = (third+ '0');
+        // if(0!=third)
+        // {
+        // destAddrBuffer[j] = thirdchar;
+        // j++;
+        // } 
+        // uint8_t second = (firstByte%100)/10;
+        // char secondchar = (second + '0');
+        // if(0!=third||0!=second)
+        // {
+        // destAddrBuffer[j] = secondchar;
+        // j++;
+        // }
+        // uint8_t first = firstByte%10;
+        // char firstchar = (first + '0');
+        // destAddrBuffer[j]=firstchar;
+        // j++;
+        // destAddrBuffer[j] = '.';
+        // j++;
+        // }
+        // destAddrBuffer[j]='\0';
+        int l;
+        l = int((char)(buffer[0]) << 24 |
+                        (char)(buffer[1]) << 16 |
+                        (char)(buffer[2]) << 8 |
+                        (char)(buffer[3]));
+        sendUDP(routerIP,sourceaddr,l, ttl, (char*)&a, 4,0);
+        int numberOfThousands = 0;
+        numberOfThousands=a/1000;
+        for(int k = 0;k<numberOfThousands;k++)
+        {
+            sendUDP(routerIP,sourceaddr,l, ttl, &buffer[8+(k*1000)], 1000,k+1);
+        }
+        int numberLeft=0;
+        numberLeft = a%1000;
+        if(numberLeft>0)
+        {
+            sendUDP(routerIP,sourceaddr,l, ttl, &buffer[8+a-numberLeft], numberLeft,numberOfThousands+1);
+        }
         ifs.close();
-
         return true;
     }
     return false;
