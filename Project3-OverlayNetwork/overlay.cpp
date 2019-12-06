@@ -261,8 +261,8 @@ int runRouter(char *ipMappings)
     std::vector<std::string> vmIPs;
     parseMappings(ipMappings, overlayIPs, vmIPs);
 
-    printf("Number of overlay networks parsed: %ld\n", overlayIPs.size());
-    printf("Number of overlay networks parsed: %ld\n", vmIPs.size());
+    printf("Number of overlay networks parsed: %lu\n", overlayIPs.size());
+    printf("Number of overlay networks parsed: %lu\n", vmIPs.size());
 
     // listen for UDP messages, check for the overlay IP and send to corresponding vm IP, decrement ttl/drop packets as needed
     char *udpSegment = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
@@ -348,17 +348,23 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     }
 
      // Find filename to write to
-    char filename[INET_ADDRSTRLEN + 4];
-    snprintf(filename, INET_ADDRSTRLEN+4, "%s.bin", ipBuffer);
-    printf("Prepared to write to file: %s\n", filename);
+    std::string outputFile;
+    outputFile += ipBuffer;
+    outputFile += ".bin";
+
+    // char filename[INET_ADDRSTRLEN + 4 + 1];
+    // snprintf(filename, INET_ADDRSTRLEN+4 + 1, "%s.bin", ipBuffer);
+    // printf("Prepared to write to file: %s\n", filename);
+
+    printf("Prepared to write to file: %s\n", outputFile.c_str());
 
     std::ofstream outfile;
-    outfile.open(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app); // append instead of overwrite
+    outfile.open(outputFile, std::ofstream::out | std::ofstream::binary | std::ofstream::app); // append instead of overwrite
     printf("ofstream open didnt segfault lol\n");
 
     for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
         printf("Trying to recieve segment %d from router\n", i);
-        memset(serverUDP, 0, MAX_SEGMENT_SIZE);
+        //memset(serverUDP, 0, MAX_SEGMENT_SIZE); TODO 
         recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
         printf("Recieved data from src %s\n", ipBuffer);
 
