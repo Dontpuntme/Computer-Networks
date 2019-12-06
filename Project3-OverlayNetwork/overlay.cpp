@@ -261,8 +261,8 @@ int runRouter(char *ipMappings)
     std::vector<std::string> vmIPs;
     parseMappings(ipMappings, overlayIPs, vmIPs);
 
-    printf("Number of overlay networks parsed: %lu\n", overlayIPs.size());
-    printf("Number of overlay networks parsed: %lu\n", vmIPs.size());
+    printf("Number of overlay networks parsed: %u\n", overlayIPs.size());
+    printf("Number of overlay networks parsed: %u\n", vmIPs.size());
 
     // listen for UDP messages, check for the overlay IP and send to corresponding vm IP, decrement ttl/drop packets as needed
     char *udpSegment = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
