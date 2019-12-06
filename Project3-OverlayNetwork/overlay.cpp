@@ -4,7 +4,6 @@
 #include <fstream>
 #include <string.h>
 
-#define MAXLINE 1024
 // sample router input:  ./overlay --router 1.2.3.4:10.0.0.2,5.6.7.8:10.0.0.3,9.10.11.12:10.0.0.4,13.14.15.16:10.0.0.5
 // sample endhost input:   ./overlay --host 10.0.0.1 1.2.3.4 12
 
@@ -55,11 +54,6 @@ void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl
     }
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(DEFAULT_UDP_PORT);
-    // if (inet_pton(AF_INET, destaddr, &dest_addr.sin_addr) <= 0)
-    // {
-    //     perror("Invalid address/ Address not supported");
-    //     exit(1);
-    // }
     dest_addr.sin_addr.s_addr = destAddr;
     src_addr.sin_family = AF_INET;
     src_addr.sin_port = htons(DEFAULT_UDP_PORT);
@@ -89,7 +83,6 @@ void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl
         exit(1);
     }
 
-    // TODO fix send msg size
     size_t msg_len = datalen + sizeof(struct iphdr) + sizeof(struct udphdr); // sizeof(struct iphdr) + sizeof(struct udphdr) + 1000;
     //size_t msg_len = (sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
 
@@ -142,7 +135,7 @@ int8_t routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vect
     struct udphdr *udp = (struct udphdr *)(packet + size_ip);
 
     // check checksum
-    printf("Packet checksum at router: %d (SHOULD BE 0)\n", ip->ip_sum);
+    printf("Packet checksum at  { {r: %d (SHOULD BE 0)\n", ip->ip_sum);
 
     // first check src/dst overlay IPs
     char srcOverlayIP[INET_ADDRSTRLEN];
@@ -243,7 +236,6 @@ void recieveUDP(char *buffer, int socket, size_t segment_size)
 
     byte_count = recvfrom(socket, buffer, segment_size, 0, &addr, &fromlen);
 
-    printf("recv()'d %d bytes of data in buf\n", byte_count);
     printf("Recieved data from socket\n");
 }
 
@@ -383,7 +375,7 @@ void recieveAndWriteToFile(int numSegmentsToRecv, FILE* outfile, int rSocket) {
     char *serverUDP = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
     for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
         printf("Trying to recieve segment %d from router\n", i);
-        //memset(serverUDP, 0, MAX_SEGMENT_SIZE); TODO 
+        memset(serverUDP, 0, MAX_SEGMENT_SIZE);
         recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
 
         fwrite(serverUDP, sizeof(char), sizeof(struct iphdr) + sizeof(struct udphdr), outfile);
@@ -426,8 +418,8 @@ bool lookForFileAndProcess(char *routerIP, char *sourceaddr, uint32_t ttl)
                 }
                 else
                 {
+                     // deal with realloc failing because memory could not be allocated.
                     break;
-                    // deal with realloc failing because memory could not be allocated.
                 }
             }
         }
