@@ -331,9 +331,11 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
     printf("Endhost recieved data\n");
     uint32_t size_ip = 0;
-    struct ip *ip = (struct ip *)(serverUDP);
+    struct ip *ip = (struct ip *)malloc(sizeof(struct ip));
+    ip = (struct ip *)(serverUDP);
     size_ip = (int)(ip->ip_hl * 4);
-    struct udphdr *udp = (struct udphdr *)(serverUDP + size_ip);
+    struct udphdr *udp = (struct udphdr *)malloc(sizeof(struct udphdr *));
+    udp = (struct udphdr *)(serverUDP + size_ip);
 
     char ipBuffer[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ip->ip_src.s_addr,
@@ -383,6 +385,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         }
         outfile.close();
     }
+    free(ip);
+    free(udp);
 
     printf("Server : %s\n", serverUDP);
 }
