@@ -359,13 +359,21 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 
     printf("Prepared to write to file: %s\n", outputFile.c_str());
 
-    FILE* outfile;
-    if (!outfile) {
-        printf("Something fucked up\n");
-    }
-    outfile = fopen(outputFile.c_str(), "ab+");
 
-    recieveAndWriteToFile(numSegmentsToRecv, outfile, rSocket);
+    // create output file
+    FILE* createFile;
+    createFile = fopen(outputFile.c_str(), "w");
+    fclose(createFile);
+
+
+    // get file descriptor to append to output file
+    FILE* writeFile;
+    writeFile = fopen(outputFile.c_str(), "ab");
+    if (!writeFile) {
+        printf("Something messed up with fopen\n");
+    }
+
+    recieveAndWriteToFile(numSegmentsToRecv, writeFile, rSocket);
 
     printf("End host done\n");
 }
