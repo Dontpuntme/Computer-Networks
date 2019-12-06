@@ -344,7 +344,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     int numSegmentsToRecv = 1;
     if (ip->ip_id == 0) { // figure out how many more segments we should be expecting
         printf("Looking at packet id 0, figuring out how many segments to recieve\n");
-        int filesize = (int)(serverUDP +  sizeof(struct iphdr) + sizeof(struct udphdr));
+        int filesize = *(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
         printf("%d\n",filesize);
         //numSegmentsToRecv = ...
     }
