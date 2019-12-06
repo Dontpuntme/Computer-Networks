@@ -349,6 +349,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 
      // Find filename to write to
     std::string outputFile;
+    outputFile += "test";
     outputFile += ipBuffer;
     outputFile += ".bin";
 
