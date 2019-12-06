@@ -77,7 +77,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl
     ip->protocol = 17;
     ip->tot_len = 5;
     ip->tos = 0;
-    ip->id;
+    ip->id = id;
     udp->source = htons(DEFAULT_UDP_PORT);
     udp->dest = htons(DEFAULT_UDP_PORT);
     udp->len = sizeof(struct udphdr);
@@ -334,28 +334,41 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     struct ip *ip = (struct ip *)(serverUDP);
     size_ip = (int)(ip->ip_hl * 4);
     struct udphdr *udp = (struct udphdr *)(serverUDP + size_ip);
-    if(ip->ip_id!=0)
-    {
-    std::ofstream outfile;
+
     char ipBuffer[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ip->ip_src.s_addr,
-			     ipBuffer, sizeof(ipBuffer));
-    
+                    ipBuffer, sizeof(ipBuffer));
+        
     printf("Recieved data from src %s\n", ipBuffer);
 
-    // Find filename to write to
+    int numSegmentsToRecv = 1;
+    if (ip->ip_id == 0) { // figure out how many more segments we should be expecting
+        printf("Looking at packet id 0, figuring out how many segments to recieve\n");
+        //numSegmentsToRecv = ...
+    }
+
+     // Find filename to write to
     char filename[INET_ADDRSTRLEN + 4];
     snprintf(filename, INET_ADDRSTRLEN+4, "%s.bin", ipBuffer);
-    printf("Writing to file: %s\n", filename);
+    printf("Prepared to write to file: %s\n", filename);
 
-    // Write file data to filename
-    outfile.open(filename, std::ofstream::binary | std::ofstream::app); // append instead of overwrite
-    if (outfile) {
-        //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
-        outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
-        printf("Finished writing to file\n");
-    }
-    outfile.close();
+    std::ofstream outfile;
+    outfile.open(filename, std::ofstream::out | std::ofstream::binary | std::ofstream::app); // append instead of overwrite
+    printf("ofstream open didnt segfault lol\n");
+
+    for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
+        printf("Trying to recieve segment %d from router\n", i);
+        memset(serverUDP, 0, MAX_SEGMENT_SIZE);
+        recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
+        printf("Recieved data from src %s\n", ipBuffer);
+
+        // Write file data to filename
+        if (outfile) {
+            //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
+            outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
+            printf("Finished writing to file\n");
+        }
+        outfile.close();
     }
 
     printf("Server : %s\n", serverUDP);
