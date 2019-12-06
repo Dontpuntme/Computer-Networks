@@ -329,26 +329,32 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     char *serverUDP = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
 
     recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
+    printf("Endhost recieved data\n");
     uint32_t size_ip = 0;
     struct ip *ip = (struct ip *)(serverUDP);
     size_ip = (int)(ip->ip_hl * 4);
     struct udphdr *udp = (struct udphdr *)(serverUDP + size_ip);
     std::ofstream outfile;
-    char* ipBuffer = (char*)malloc(16);
+    char ipBuffer[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &ip->ip_src.s_addr,
-			     ipBuffer, 16);
+			     ipBuffer, sizeof(ipBuffer));
     
+    printf("Recieved data from src %s\n", ipBuffer);
+
     // Find filename to write to
     char filename[INET_ADDRSTRLEN + 4];
     snprintf(filename, INET_ADDRSTRLEN+4, "%s.bin", ipBuffer);
     printf("Writing to file: %s\n", filename);
 
     // Write file data to filename
-    outfile.open(filename, std::ios_base::app); // append instead of overwrite
+    outfile.open(filename, std::ofstream::binary | std::ofstream::app); // append instead of overwrite
     if (outfile) {
-        outfile << (serverUDP+ sizeof(struct iphdr) + sizeof(struct udphdr));
+        //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
+        outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
         printf("Finished writing to file\n");
     }
+
+    outfile.close();
 
     printf("Server : %s\n", serverUDP);
 }

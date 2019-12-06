@@ -3,3 +3,6 @@
 
 # compiled file
 overlay
+
+# bin files from running as end host
+*.bin
