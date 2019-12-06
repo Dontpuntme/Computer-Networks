@@ -32,5 +32,6 @@ void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl,char*
 bool lookForFileAndProcess(char* routerIP,char* sourceaddr, uint32_t ttl);
 std::string retcodeString(int8_t retcode);
 int routerSocket();
+void recieveAndWriteToFile(int numSegmentsToRecv, FILE* outfile, int rSocket);
 void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, int8_t retcode);
 
