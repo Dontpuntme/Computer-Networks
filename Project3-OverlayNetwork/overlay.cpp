@@ -333,6 +333,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     struct ip *ip = (struct ip *)(serverUDP);
     size_ip = (int)(ip->ip_hl * 4);
     struct udphdr *udp = (struct udphdr *)(serverUDP + size_ip);
+    if(ip->ip_id!=0)
+    {
     std::ofstream outfile;
     char* ipBuffer = (char*)malloc(16);
     inet_ntop(AF_INET, &ip->ip_src.s_addr,
@@ -348,6 +350,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     if (outfile) {
         outfile << (serverUDP+ sizeof(struct iphdr) + sizeof(struct udphdr));
         printf("Finished writing to file\n");
+    }
     }
 
     printf("Server : %s\n", serverUDP);
