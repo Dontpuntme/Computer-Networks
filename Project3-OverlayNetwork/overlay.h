@@ -29,5 +29,6 @@ int8_t routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vect
 void readUDP(char* packet);
 void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
 std::string retcodeString(int8_t retcode);
+int routerSocket();
 void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, int8_t retcode);
 bool lookForFileAndProcess();

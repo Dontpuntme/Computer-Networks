@@ -217,7 +217,19 @@ int8_t routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vect
     }
 }
 
-void recieveUDP(char *buffer)
+int recvSocket() {
+    struct sockaddr_in test;
+    test.sin_family = AF_INET;
+    test.sin_port = htons(DEFAULT_UDP_PORT);
+    test.sin_addr.s_addr = INADDR_ANY;
+
+    int socktest = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+    bind(socktest, (struct sockaddr *)&test, sizeof(test));
+
+    return socktest;
+}
+
+void recieveUDP(char *buffer, int socket)
 {
     struct addrinfo hints, *res;
     int sockfd;
@@ -225,15 +237,7 @@ void recieveUDP(char *buffer)
     socklen_t fromlen;
     struct sockaddr addr;
 
-    struct sockaddr_in test;
-    test.sin_family = AF_INET;
-    test.sin_port = htons(DEFAULT_UDP_PORT);
-    test.sin_addr.s_addr = INADDR_ANY;
-
-    //int socktest = socket(AF_INET, SOCK_DGRAM, 0);
-    int socktest = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
-    bind(socktest, (struct sockaddr *)&test, sizeof(test));
-    byte_count = recvfrom(socktest, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
+    byte_count = recvfrom(socket, buffer, MAX_SEGMENT_SIZE, 0, &addr, &fromlen);
 
     printf("recv()'d %d bytes of data in buf\n", byte_count);
     printf("Recieved data from socket\n");
@@ -258,10 +262,14 @@ int runRouter(char *ipMappings)
     // listen for UDP messages, check for the overlay IP and send to corresponding vm IP, decrement ttl/drop packets as needed
     char *udpSegment = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
     int8_t retcode;
+
+    // create and bind a socket to recv from
+    int socket = recvSocket();
+
     while (true)
     {
         memset(udpSegment, 0, MAX_SEGMENT_SIZE);
-        recieveUDP(udpSegment); // read from socket into buffer;
+        recieveUDP(udpSegment, socket); // read from socket into buffer;
         retcode = routePacket(udpSegment, overlayIPs, vmIPs);
         if (retcode == -1)
         {
@@ -293,6 +301,9 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         fileFlag = !lookForFileAndProcess();
     }
 
+    // create and bind a socket to recv from
+    int rSocket = recvSocket();
+
     struct sockaddr_in router_IP;
     router_IP.sin_port = DEFAULT_UDP_PORT;
     router_IP.sin_family = AF_INET;
@@ -312,7 +323,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         exit(EXIT_FAILURE);
     }
     char *serverUDP = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
-    recieveUDP(serverUDP);
+    recieveUDP(serverUDP, rSocket);
     printf("Server : %s\n", serverUDP);
 }
 
