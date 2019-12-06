@@ -19,15 +19,18 @@
 #include <iostream>
 #include <fstream>
 
-#define ETH_ADDR_LEN 6
-#define ETH_HEAD_LEN 14
 #define DEFAULT_UDP_PORT 34567
 #define MAX_SEGMENT_SIZE 1000
 
 void printUsage();
 int runRouter(char* ipMappings);
 int runEndHost(char* routerIP, char* hostIP, uint32_t ttl);
-int routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
+int8_t routePacket(char* packet, std::vector<std::string> &overlayIPs, std::vector<std::string> &vmIPs);
 void readUDP(char* packet);
+//void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
 void sendUDP(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl,char* data, uint32_t datalen,uint16_t id);
 bool lookForFileAndProcess(char* routerIP,char* sourceaddr, char* destaddr, uint32_t ttl);
+std::string retcodeString(int8_t retcode);
+int routerSocket();
+void routerlog(std::string srcOverlayIP, std::string dstOverlayIP, unsigned short ipdent, int8_t retcode);
+
