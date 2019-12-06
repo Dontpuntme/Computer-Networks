@@ -355,9 +355,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
         printf("Finished writing to file\n");
     }
-    }
-
     outfile.close();
+    }
 
     printf("Server : %s\n", serverUDP);
 }
