@@ -88,7 +88,7 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl)
         perror("Socket Creation error");
         exit(1);
     }
-    // TODO fix send msg size
+
     size_t msg_len = (sizeof(struct iphdr) + sizeof(struct udphdr) + strlen(data));
     sendto(sock, packet, msg_len, 0, (struct sockaddr *)&router_addr, sizeof(router_addr));
     usleep(100000); // packets must be separated 100ms
@@ -323,7 +323,9 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         exit(EXIT_FAILURE);
     }
     char *serverUDP = (char *)malloc(sizeof(char) * MAX_SEGMENT_SIZE);
+
     recieveUDP(serverUDP, rSocket);
+
     printf("Server : %s\n", serverUDP);
 }
 
