@@ -224,7 +224,6 @@ void recieveUDP(char *buffer)
     int byte_count;
     socklen_t fromlen;
     struct sockaddr addr;
-    bzero(buffer, MAX_SEGMENT_SIZE);
 
     struct sockaddr_in test;
     test.sin_family = AF_INET;
@@ -261,6 +260,7 @@ int runRouter(char *ipMappings)
     int8_t retcode;
     while (true)
     {
+        memset(udpSegment, 0, MAX_SEGMENT_SIZE);
         recieveUDP(udpSegment); // read from socket into buffer;
         retcode = routePacket(udpSegment, overlayIPs, vmIPs);
         if (retcode == -1)
@@ -279,7 +279,6 @@ int runRouter(char *ipMappings)
         { // This shouldnt ever happen
             printf("Unhandled return code\n");
         }
-        bzero(udpSegment, MAX_SEGMENT_SIZE);
     }
     // free memory
     free(udpSegment);
