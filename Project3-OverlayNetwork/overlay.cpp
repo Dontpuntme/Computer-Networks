@@ -360,6 +360,9 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     printf("Prepared to write to file: %s\n", outputFile.c_str());
 
     FILE* outfile;
+    if (!outfile) {
+        printf("Something fucked up\n");
+    }
     outfile = fopen(outputFile.c_str(), "ab+");
 
     recieveAndWriteToFile(numSegmentsToRecv, outfile, rSocket);
