@@ -359,18 +359,17 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
 
     printf("Prepared to write to file: %s\n", outputFile.c_str());
 
-    fflush(stdout);
+    FILE* outfile;
+    outfile = fopen(outputFile.c_str(), "ab+");
 
-    std::ofstream outfile;
-
-    if (outfile) {
-        outfile.open(outputFile, std::ios_base::out | std::ios_base::binary | std::ios_base::app); // append instead of overwrite
-        printf("ofstream open didnt segfault lol\n");
-    }
-    else {
-        perror("ofstream");
-        exit(1);
-    }
+    // if (outfile) {
+    //     outfile.open(outputFile, std::ios_base::out | std::ios_base::binary | std::ios_base::app); // append instead of overwrite
+    //     printf("ofstream open didnt segfault lol\n");
+    // }
+    // else {
+    //     perror("ofstream");
+    //     exit(1);
+    // }
 
     for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
         printf("Trying to recieve segment %d from router\n", i);
@@ -378,14 +377,20 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         recieveUDP(serverUDP, rSocket, MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr));
         printf("Recieved data from src %s\n", ipBuffer);
 
+
+        fwrite(serverUDP, sizeof(char), 1028, outfile);
+
+
         // Write file data to filename
-        if (outfile) {
-            //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
-            outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
-            printf("Finished writing to file\n");
-        }
-        outfile.close();
+        // if (outfile) {
+        //     //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
+        //     outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
+        //     printf("Finished writing to file\n");
+        // }
+        // outfile.close();
     }
+
+    fclose(outfile);
 
     printf("Server : %s\n", serverUDP);
 }
