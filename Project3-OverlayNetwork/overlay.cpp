@@ -294,7 +294,7 @@ int runRouter(char *ipMappings)
         }
     }
     // free memory
-    free(udpSegment);
+    //free(udpSegment);
 }
 
 /* run process as end-host */
@@ -379,7 +379,7 @@ void recieveAndWriteToFile(int numSegmentsToRecv, FILE* outfile, int rSocket) {
         printf("Wrote segment %d from router\n", i);
     }
     fclose(outfile);
-    free(serverUDP);
+    //free(serverUDP);
 }
 
 
@@ -444,7 +444,7 @@ bool lookForFileAndProcess(char *routerIP, char *sourceaddr, uint32_t ttl)
             sendUDP(routerIP, sourceaddr, l, ttl, &buffer[8 + a - numberLeft], numberLeft, numberOfThousands + 1);
         }
         ifs.close();
-        free(buffer);
+        //free(buffer);
         return true;
     }
     return false;
