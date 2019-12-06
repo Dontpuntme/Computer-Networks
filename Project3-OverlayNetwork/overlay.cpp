@@ -335,11 +335,20 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     struct udphdr *udp = (struct udphdr *)(serverUDP + size_ip);
     std::ofstream outfile;
     char* ipBuffer = (char*)malloc(16);
-    inet_ntop(AF_INET, &ip->ip_dst.s_addr,
+    inet_ntop(AF_INET, &ip->ip_src.s_addr,
 			     ipBuffer, 16);
     
-    outfile.open(+".bin", std::ios_base::app); // append instead of overwrite
-    outfile << (serverUDP+ sizeof(struct iphdr) + sizeof(struct udphdr));
+    // Find filename to write to
+    char filename[INET_ADDRSTRLEN + 4];
+    snprintf(filename, INET_ADDRSTRLEN+4, "%s.bin", ipBuffer);
+    printf("Writing to file: %s\n", filename);
+
+    // Write file data to filename
+    outfile.open(filename, std::ios_base::app); // append instead of overwrite
+    if (outfile) {
+        outfile << (serverUDP+ sizeof(struct iphdr) + sizeof(struct udphdr));
+        printf("Finished writing to file\n");
+    }
 
     printf("Server : %s\n", serverUDP);
 }
