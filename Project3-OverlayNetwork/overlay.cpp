@@ -359,8 +359,14 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     printf("Prepared to write to file: %s\n", outputFile.c_str());
 
     std::ofstream outfile;
-    outfile.open(outputFile, std::ofstream::out | std::ofstream::binary | std::ofstream::app); // append instead of overwrite
-    printf("ofstream open didnt segfault lol\n");
+    if (outfile) {
+        outfile.open(outputFile, std::ios_base::out | std::ios_base::binary | std::ios_base::app); // append instead of overwrite
+        printf("ofstream open didnt segfault lol\n");
+    }
+    else {
+        perror("ofstream");
+        exit(1);
+    }
 
     for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
         printf("Trying to recieve segment %d from router\n", i);
@@ -441,6 +447,7 @@ bool lookForFileAndProcess(char *routerIP, char *sourceaddr, uint32_t ttl)
             sendUDP(routerIP, sourceaddr, l, ttl, &buffer[8 + a - numberLeft], numberLeft, numberOfThousands + 1);
         }
         ifs.close();
+        free(buffer);
         return true;
     }
     return false;
