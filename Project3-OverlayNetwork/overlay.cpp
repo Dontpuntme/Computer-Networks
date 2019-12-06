@@ -24,7 +24,7 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
     {
         if (countIp % 2 == 0)
         {
-            overlayIPs.push_back(currIp); // TODO make sure these are correct (overlay vs VM)
+            overlayIPs.push_back(currIp);
             printf("Mapped Overlay IP: %s\n", currIp);
         }
         else
@@ -37,7 +37,6 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
     }
 }
 
-// TODO add functionality to send the filesize then
 void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl, char *data, uint32_t datalen, uint16_t id)
 {
     char *packet = (char *)malloc(sizeof(struct iphdr) + sizeof(struct udphdr) + datalen);
@@ -161,7 +160,7 @@ int8_t routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vect
         exit(1);
     }
 
-    // check routing map for where src IP should go
+    // check routing map for where dst overlay IP should go
     std::string overlayIP;
     uint32_t i = 0;
     bool foundMatch = false;
@@ -169,8 +168,8 @@ int8_t routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vect
     for (i = 0; i < overlayIPs.size(); i++)
     {
         tableIP = overlayIPs.at(i).c_str();
-        printf("Checking overlay IP: %s against IP in table: %s\n", srcOverlayIP, tableIP);
-        if ((strcmp(srcOverlayIP, overlayIPs[i].c_str()) == 0))
+        printf("Checking overlay IP: %s against IP in table: %s\n", dstOverlayIP, tableIP);
+        if ((strcmp(dstOverlayIP, overlayIPs[i].c_str()) == 0))
         {
             printf("Found match for overlay IP in routing table!\n");
             foundMatch = true;
@@ -364,6 +363,7 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     FILE* createFile;
     createFile = fopen(outputFile.c_str(), "w");
     fclose(createFile);
+    printf("Created output file\n");
 
 
     // get file descriptor to append to output file
@@ -372,7 +372,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     if (!writeFile) {
         printf("Something messed up with fopen\n");
     }
-
+    
+    printf("Beginning to recieve additional segments and write to file\n");
     recieveAndWriteToFile(numSegmentsToRecv, writeFile, rSocket);
 
     printf("End host done\n");
