@@ -38,7 +38,7 @@ void parseMappings(char *ipMappings, std::vector<std::string> &overlayIPs, std::
 }
 
 // TODO add functionality to send the filesize then 
-void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl,char* data, uint32_t datalen, uint16_t id)
+void sendUDP(char *routeraddr, char *sourceaddr, uint32_t destAddr, uint32_t ttl,char* data, uint32_t datalen, uint16_t id)
 {
     char *packet = (char *)malloc(sizeof(struct iphdr) + sizeof(struct udphdr) + datalen);
     struct sockaddr_in dest_addr;
@@ -56,11 +56,12 @@ void sendUDP(char *routeraddr, char *sourceaddr, char *destaddr, uint32_t ttl,ch
     }
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(DEFAULT_UDP_PORT);
-    if (inet_pton(AF_INET, destaddr, &dest_addr.sin_addr) <= 0)
-    {
-        perror("Invalid address/ Address not supported");
-        exit(1);
-    }
+    // if (inet_pton(AF_INET, destaddr, &dest_addr.sin_addr) <= 0)
+    // {
+    //     perror("Invalid address/ Address not supported");
+    //     exit(1);
+    // }
+    dest_addr.sin_addr.s_addr=destAddr;
     src_addr.sin_family = AF_INET;
     src_addr.sin_port = htons(DEFAULT_UDP_PORT);
     if (inet_pton(AF_INET, sourceaddr, &src_addr.sin_addr) <= 0)
@@ -292,49 +293,52 @@ bool lookForFileAndProcess(char* routerIP,char* sourceaddr, char* destaddr, uint
         {
             std::cout << buffer[8+k];
         }
-        int j=0;
-        char* destAddrBuffer = (char*) malloc(50);
-        for(int k = 0; k<4; k++)
-        {
-        uint8_t firstByte = buffer[0];
-        uint8_t third = (firstByte/100);
-        char thirdchar = (third+ '0');
-        if(0!=third)
-        {
-        destAddrBuffer[j] = thirdchar;
-        j++;
-        }
-        
-        uint8_t second = (firstByte%100)/10;
-        char secondchar = (second + '0');
-        if(0!=third||0!=second)
-        {
-        destAddrBuffer[j] = secondchar;
-        j++;
-        }
-        uint8_t first = firstByte%10;
-        char firstchar = (first + '0');
-        destAddrBuffer[j]=firstchar;
-        j++;
-        destAddrBuffer[j] = '.';
-        j++;
-        }
-        destAddrBuffer[j]='\0';
-        sendUDP(routerIP,sourceaddr,destaddr, ttl, (char*)&a, 4,0);
+        // int j=0;
+        // char* destAddrBuffer = (char*) malloc(50);
+        // for(int k = 0; k<4; k++)
+        // {
+        // uint8_t firstByte = buffer[k];
+        // uint8_t third = (firstByte/100);
+        // char thirdchar = (third+ '0');
+        // if(0!=third)
+        // {
+        // destAddrBuffer[j] = thirdchar;
+        // j++;
+        // } 
+        // uint8_t second = (firstByte%100)/10;
+        // char secondchar = (second + '0');
+        // if(0!=third||0!=second)
+        // {
+        // destAddrBuffer[j] = secondchar;
+        // j++;
+        // }
+        // uint8_t first = firstByte%10;
+        // char firstchar = (first + '0');
+        // destAddrBuffer[j]=firstchar;
+        // j++;
+        // destAddrBuffer[j] = '.';
+        // j++;
+        // }
+        // destAddrBuffer[j]='\0';
+        int l;
+        l = int((char)(buffer[0]) << 24 |
+                        (char)(buffer[1]) << 16 |
+                        (char)(buffer[2]) << 8 |
+                        (char)(buffer[3]));
+        sendUDP(routerIP,sourceaddr,l, ttl, (char*)&a, 4,0);
         int numberOfThousands = 0;
         numberOfThousands=a/1000;
         for(int k = 0;k<numberOfThousands;k++)
         {
-            sendUDP(routerIP,sourceaddr,destaddr, ttl, &buffer[8+(k*1000)], 1000,k+1);
+            sendUDP(routerIP,sourceaddr,l, ttl, &buffer[8+(k*1000)], 1000,k+1);
         }
         int numberLeft=0;
         numberLeft = a%1000;
         if(numberLeft>0)
         {
-            sendUDP(routerIP,sourceaddr,destaddr, ttl, &buffer[8+a-numberLeft], numberLeft,numberOfThousands+1);
+            sendUDP(routerIP,sourceaddr,l, ttl, &buffer[8+a-numberLeft], numberLeft,numberOfThousands+1);
         }
         ifs.close();
-
         return true;
     }
     return false;
