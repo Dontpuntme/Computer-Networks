@@ -357,9 +357,8 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
     // printf("Prepared to write to file: %s\n", filename);
 
     printf("Prepared to write to file: %s\n", outputFile.c_str());
-
-    std::ofstream outfile;
-    outfile.open(outputFile, std::ofstream::out | std::ofstream::binary | std::ofstream::app); // append instead of overwrite
+    FILE * pFile;
+    pFile = fopen (outputFile.c_str(),"a");
     printf("ofstream open didnt segfault lol\n");
 
     for (int i = 0; i < numSegmentsToRecv; i++ ) { // recv and write to file 
@@ -369,14 +368,13 @@ int runEndHost(char *routerIP, char *hostIP, uint32_t ttl)
         printf("Recieved data from src %s\n", ipBuffer);
 
         // Write file data to filename
-        if (outfile) {
+        if (pFile) {
             //outfile << (serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr));
-            outfile.write(serverUDP + sizeof(struct iphdr) + sizeof(struct udphdr), 1000);
+            fwrite (serverUDP , sizeof(char), MAX_SEGMENT_SIZE + sizeof(struct iphdr) + sizeof(struct udphdr), pFile);
             printf("Finished writing to file\n");
         }
-        outfile.close();
     }
-
+    fclose(pFile);
     printf("Server : %s\n", serverUDP);
 }
 
