@@ -135,7 +135,7 @@ int8_t routePacket(char *packet, std::vector<std::string> &overlayIPs, std::vect
     struct udphdr *udp = (struct udphdr *)(packet + size_ip);
 
     // check checksum
-    printf("Packet checksum at  { {r: %d (SHOULD BE 0)\n", ip->ip_sum);
+    printf("Packet checksum: %d (SHOULD BE 0)\n", ip->ip_sum);
 
     // first check src/dst overlay IPs
     char srcOverlayIP[INET_ADDRSTRLEN];
